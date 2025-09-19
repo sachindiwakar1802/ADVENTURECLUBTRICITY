@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/adventure-icon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Discover India's incredible adventures with Adventure India. Authentic trekking, wildlife safaris, and cultural experiences across diverse landscapes." />
+    <meta name="keywords" content="adventure tours india, trekking, wildlife safari, cultural tours, himalayan treks, kerala backwaters, rajasthan desert" />
+    <meta name="author" content="Adventure India Team" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://adventureindia.com/" />
+    <meta property="og:title" content="Adventure India - Discover India's Hidden Wonders" />
+    <meta property="og:description" content="Experience authentic adventure tours across India. From Himalayan treks to desert safaris, discover incredible journeys with expert guides." />
+    <meta property="og:image" content="https://adventureindia.com/og-image.jpg" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://adventureindia.com/" />
+    <meta property="twitter:title" content="Adventure India - Discover India's Hidden Wonders" />
+    <meta property="twitter:description" content="Experience authentic adventure tours across India. From Himalayan treks to desert safaris, discover incredible journeys with expert guides." />
+    <meta property="twitter:image" content="https://adventureindia.com/twitter-image.jpg" />
+
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "TravelAgency",
+      "name": "Adventure India",
+      "description": "Authentic adventure tours across India",
+      "url": "https://adventureindia.com",
+      "telephone": "+91 98765 43210",
+      "email": "hello@adventureindia.com",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "123 Adventure Street",
+        "addressLocality": "Delhi",
+        "addressCountry": "IN",
+        "postalCode": "110001"
+      },
+      "sameAs": [
+        "https://facebook.com/adventureindia",
+        "https://instagram.com/adventureindia",
+        "https://twitter.com/adventureindia"
+      ]
+    }
+    </script>
+    
+    <title>Adventure India - Discover India's Hidden Wonders</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    
+    <!-- Preloader -->
+    <div id="preloader" style="position: fixed; inset: 0; background: linear-gradient(135deg, #14532d, #166534, #15803d); display: flex; align-items: center; justify-content: center; z-index: 9999;">
+      <div style="text-align: center; color: white;">
+        <div style="width: 60px; height: 60px; margin: 0 auto 20px; background: linear-gradient(45deg, #22c55e, #16a34a); border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: spin 2s linear infinite;">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+          </svg>
+        </div>
+        <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 0.5rem;">Adventure India</h2>
+        <p style="opacity: 0.8;">Preparing your adventure...</p>
+      </div>
+    </div>
+    
+    <script>
+      // Remove preloader when page loads
+      window.addEventListener('load', function() {
+        const preloader = document.getElementById('preloader');
+        if (preloader) {
+          preloader.style.opacity = '0';
+          preloader.style.transition = 'opacity 0.5s ease-out';
+          setTimeout(() => preloader.remove(), 500);
+        }
+      });
+    </script>
+    
+    <style>
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+    
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
