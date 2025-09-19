@@ -269,9 +269,9 @@ const StoryNavigation = ({
     onStoryChange(nextIndex);
   }, [currentStory, stories.length, onStoryChange]);
 
-  // FIXED: Enhanced Back to Home handler with better debugging
+  // FIXED: Enhanced Back to Home handler
   const handleBackToHome = useCallback((event) => {
-    console.log('🌲 FOREST TIGER BACK BUTTON CLICKED!');
+    console.log('🏠 BACK TO HOME BUTTON CLICKED!');
     console.log('Event received:', event);
     console.log('onExit function:', onExit);
     console.log('onExit type:', typeof onExit);
@@ -395,129 +395,9 @@ const StoryNavigation = ({
         ))}
       </div>
 
-      {/* HUGE FOREST TIGER BACK BUTTON - TOP CENTER */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[500]">
-        <button
-          onClick={handleBackToHome}
-          className="relative overflow-hidden transform transition-all duration-300 hover:scale-110 hover:-translate-y-2 active:scale-95 active:translate-y-0 focus:outline-none focus:ring-4 focus:ring-green-400/50"
-          style={{
-            width: '200px',
-            height: '80px',
-            background: `
-              linear-gradient(45deg, #228B22 0%, #32CD32 25%, #228B22 50%, #32CD32 75%, #228B22 100%),
-              repeating-linear-gradient(
-                45deg,
-                #228B22,
-                #228B22 8px,
-                #2F5233 8px,
-                #2F5233 16px,
-                #1F4A1F 16px,
-                #1F4A1F 24px,
-                #2F5233 24px,
-                #2F5233 32px
-              )
-            `,
-            backgroundSize: '100% 100%, 40px 40px',
-            border: '4px solid #2F5233',
-            borderRadius: '20px',
-            color: 'white',
-            fontSize: '18px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            boxShadow: `
-              0 12px 25px rgba(34, 139, 34, 0.4),
-              0 8px 10px rgba(0, 0, 0, 0.3),
-              inset 0 2px 4px rgba(255, 255, 255, 0.2),
-              inset 0 -2px 4px rgba(0, 0, 0, 0.2)
-            `,
-            textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
-            pointerEvents: 'auto',
-            isolation: 'isolate',
-            position: 'relative'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.background = `
-              linear-gradient(45deg, #32CD32 0%, #00FF00 25%, #32CD32 50%, #00FF00 75%, #32CD32 100%),
-              repeating-linear-gradient(
-                45deg,
-                #32CD32,
-                #32CD32 8px,
-                #3F6B3F 8px,
-                #3F6B3F 16px,
-                #2F5A2F 16px,
-                #2F5A2F 24px,
-                #3F6B3F 24px,
-                #3F6B3F 32px
-              )
-            `;
-            e.target.style.boxShadow = `
-              0 16px 35px rgba(50, 205, 50, 0.6),
-              0 12px 15px rgba(0, 0, 0, 0.4),
-              inset 0 2px 4px rgba(255, 255, 255, 0.3),
-              inset 0 -2px 4px rgba(0, 0, 0, 0.3)
-            `;
-            e.target.style.borderColor = '#3F6B3F';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.background = `
-              linear-gradient(45deg, #228B22 0%, #32CD32 25%, #228B22 50%, #32CD32 75%, #228B22 100%),
-              repeating-linear-gradient(
-                45deg,
-                #228B22,
-                #228B22 8px,
-                #2F5233 8px,
-                #2F5233 16px,
-                #1F4A1F 16px,
-                #1F4A1F 24px,
-                #2F5233 24px,
-                #2F5233 32px
-              )
-            `;
-            e.target.style.boxShadow = `
-              0 12px 25px rgba(34, 139, 34, 0.4),
-              0 8px 10px rgba(0, 0, 0, 0.3),
-              inset 0 2px 4px rgba(255, 255, 255, 0.2),
-              inset 0 -2px 4px rgba(0, 0, 0, 0.2)
-            `;
-            e.target.style.borderColor = '#2F5233';
-          }}
-          title="🌲 Back to Home - Forest Tiger Style!"
-        >
-          {/* Animated Tiger Stripes Overlay */}
-          <div
-            className="absolute inset-0 opacity-30"
-            style={{
-              background: `
-                repeating-linear-gradient(
-                  -45deg,
-                  transparent,
-                  transparent 4px,
-                  rgba(255, 140, 0, 0.3) 4px,
-                  rgba(255, 140, 0, 0.3) 8px,
-                  transparent 8px,
-                  transparent 12px,
-                  rgba(255, 69, 0, 0.3) 12px,
-                  rgba(255, 69, 0, 0.3) 16px
-                )
-              `,
-              backgroundSize: '32px 32px',
-              animation: 'tigerStripes 2s linear infinite',
-              borderRadius: '16px'
-            }}
-          />
-          
-          {/* Button Content */}
-          <div className="relative z-10 flex items-center justify-center space-x-3">
-            <span style={{ fontSize: '24px' }}>🏠</span>
-            <span>BACK TO HOME</span>
-            <span style={{ fontSize: '20px' }}>🐅</span>
-          </div>
-        </button>
-      </div>
-
-      {/* 3D TOP CONTROLS - SMALLER NOW */}
+      {/* REVISED LEFT SIDEBAR CONTROLS - NOW WITH HOME BUTTON AT BOTTOM */}
       <div className="absolute top-6 left-6 z-[300] flex flex-col space-y-3">
-        {/* 3D PAUSE/PLAY BUTTON */}
+        {/* 3D PAUSE/PLAY BUTTON - NO EMOJIS */}
         <button
           onClick={handlePauseToggle}
           className="relative transform transition-all duration-200 hover:scale-105 hover:-translate-y-1 active:scale-95 active:translate-y-1"
@@ -527,7 +407,7 @@ const StoryNavigation = ({
               : 'linear-gradient(135deg, #f39c12, #e67e22, #d35400)',
             border: 'none',
             borderRadius: '12px',
-            padding: '12px',
+            padding: '12px 16px',
             color: 'white',
             fontSize: '12px',
             fontWeight: 'bold',
@@ -546,17 +426,15 @@ const StoryNavigation = ({
             textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
-            minWidth: '100px',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            minWidth: '120px'
           }}
           title={isPaused ? "Resume (Spacebar)" : "Pause (Spacebar)"}
         >
-          <span>{isPaused ? '▶️' : '⏸️'}</span>
-          <span>{isPaused ? 'PLAY' : 'PAUSE'}</span>
+          {isPaused ? 'PLAY' : 'PAUSE'}
         </button>
 
-        {/* 3D MENU BUTTON */}
+        {/* 3D MENU BUTTON - NO EMOJIS */}
         <button
           onClick={handleMenuToggle}
           className="relative transform transition-all duration-200 hover:scale-105 hover:-translate-y-1 active:scale-95 active:translate-y-1"
@@ -566,9 +444,9 @@ const StoryNavigation = ({
               : 'linear-gradient(135deg, #34495e, #2c3e50, #1b2631)',
             border: 'none',
             borderRadius: '12px',
-            padding: '12px',
+            padding: '12px 16px',
             color: 'white',
-            fontSize: '16px',
+            fontSize: '12px',
             fontWeight: 'bold',
             cursor: 'pointer',
             boxShadow: showNavigation 
@@ -583,24 +461,68 @@ const StoryNavigation = ({
                   inset 0 1px 0 rgba(255, 255, 255, 0.2)
                 `,
             textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
-            minWidth: '50px',
-            minHeight: '50px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            minWidth: '120px'
           }}
           title="Menu"
         >
-          {showNavigation ? '📖' : '⋯'}
+          {showNavigation ? 'CLOSE MENU' : 'STORY MENU'}
+        </button>
+
+        {/* 3D HOME BUTTON - MOVED TO BOTTOM, NO EMOJIS */}
+        <button
+          onClick={handleBackToHome}
+          className="relative transform transition-all duration-200 hover:scale-105 hover:-translate-y-1 active:scale-95 active:translate-y-1"
+          style={{
+            background: 'linear-gradient(135deg, #e74c3c, #c0392b, #a93226)',
+            border: 'none',
+            borderRadius: '12px',
+            padding: '12px 16px',
+            color: 'white',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            boxShadow: `
+              0 8px 15px rgba(231, 76, 60, 0.4),
+              0 4px 6px rgba(0, 0, 0, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2)
+            `,
+            textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minWidth: '120px'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.background = 'linear-gradient(135deg, #ec7063, #e74c3c, #dc3545)';
+            e.target.style.boxShadow = `
+              0 12px 25px rgba(231, 76, 60, 0.6),
+              0 8px 10px rgba(0, 0, 0, 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.3)
+            `;
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b, #a93226)';
+            e.target.style.boxShadow = `
+              0 8px 15px rgba(231, 76, 60, 0.4),
+              0 4px 6px rgba(0, 0, 0, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2)
+            `;
+          }}
+          title="Back to Home (ESC)"
+        >
+          BACK TO HOME
         </button>
       </div>
 
-      {/* 3D LEFT SIDE NAVIGATION ARROWS */}
+      {/* 3D LEFT SIDE NAVIGATION ARROWS - NO EMOJIS */}
       <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-[400] flex flex-col space-y-4">
         <button
           onClick={handlePreviousStory}
           disabled={stories.length <= 1 || showNavigation}
-          className={`w-20 h-20 rounded-2xl transform transition-all duration-200 flex items-center justify-center text-2xl font-bold ${
+          className={`w-24 h-20 rounded-2xl transform transition-all duration-200 flex items-center justify-center text-sm font-bold ${
             stories.length <= 1 || showNavigation
               ? 'opacity-50 cursor-not-allowed' 
               : 'hover:scale-105 hover:-translate-y-1 active:scale-95 active:translate-y-1 cursor-pointer'
@@ -622,13 +544,13 @@ const StoryNavigation = ({
           }}
           title="Previous Story (Left Arrow)"
         >
-          ⬅️
+          PREVIOUS
         </button>
 
         <button
           onClick={handleNextStory}
           disabled={stories.length <= 1 || showNavigation}
-          className={`w-20 h-20 rounded-2xl transform transition-all duration-200 flex items-center justify-center text-2xl font-bold ${
+          className={`w-24 h-20 rounded-2xl transform transition-all duration-200 flex items-center justify-center text-sm font-bold ${
             stories.length <= 1 || showNavigation
               ? 'opacity-50 cursor-not-allowed' 
               : 'hover:scale-105 hover:-translate-y-1 active:scale-95 active:translate-y-1 cursor-pointer'
@@ -650,7 +572,7 @@ const StoryNavigation = ({
           }}
           title="Next Story (Right Arrow)"
         >
-          ➡️
+          NEXT
         </button>
       </div>
 
@@ -686,7 +608,7 @@ const StoryNavigation = ({
       </div>
 
       {/* Main Story Content */}
-      <div className="absolute inset-0 z-50 flex flex-col justify-between p-6 pt-32 pb-32">
+      <div className="absolute inset-0 z-50 flex flex-col justify-between p-6 pt-20 pb-32">
         <div className="flex-1 flex items-end">
           <motion.div 
             className="max-w-4xl ml-48"
@@ -717,7 +639,7 @@ const StoryNavigation = ({
         </div>
       </div>
 
-      {/* Bottom Action Bar with 3D Elements */}
+      {/* Bottom Action Bar with 3D Elements - NO EMOJIS */}
       <div className="absolute bottom-6 left-48 right-6 z-[150]">
         <div className="flex items-center justify-between">
           <motion.div 
@@ -744,14 +666,14 @@ const StoryNavigation = ({
                 textShadow: isPaused ? 'none' : '0 1px 2px rgba(0, 0, 0, 0.2)'
               }}
             >
-              {isPaused ? '⏸️ PAUSED' : '▶️ PLAYING'}
+              {isPaused ? 'PAUSED' : 'PLAYING'}
             </div>
 
             <div className="text-white/60 text-xs">
               Progress: {Math.round(storyProgress * 100)}%
             </div>
             
-            {/* Secondary Back Button in Bottom Bar */}
+            {/* Secondary Back Button in Bottom Bar - NO EMOJIS */}
             <button
               onClick={handleBackToHome}
               className="text-white/60 hover:text-white text-sm flex items-center space-x-1 transition-all duration-200 transform hover:scale-105 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20"
@@ -759,7 +681,6 @@ const StoryNavigation = ({
                 textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)'
               }}
             >
-              <span>←</span>
               <span>Back to Stories</span>
             </button>
           </motion.div>
@@ -793,7 +714,7 @@ const StoryNavigation = ({
         </div>
       </div>
 
-      {/* BULLETPROOF Navigation Menu with 3D Story Cards */}
+      {/* BULLETPROOF Navigation Menu with 3D Story Cards - NO EMOJIS */}
       <AnimatePresence>
         {showNavigation && (
           <>
@@ -808,7 +729,7 @@ const StoryNavigation = ({
               <div className="absolute inset-0 z-[8100] flex items-center justify-center p-8">
                 <div className="w-full max-w-6xl">
                   <h2 className="text-white text-4xl font-bold text-center mb-12">
-                    📚 Story Menu
+                    Story Menu
                   </h2>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -840,7 +761,7 @@ const StoryNavigation = ({
                       >
                         <div className="flex items-start justify-between mb-3">
                           <h3 className="text-white font-bold text-xl mb-2 flex items-center group-hover:text-blue-200 transition-colors">
-                            {currentStory === index && <span className="mr-2">▶️</span>}
+                            {currentStory === index && <span className="mr-2">NOW PLAYING</span>}
                             {story.title}
                           </h3>
                           {currentStory === index && (
@@ -862,11 +783,11 @@ const StoryNavigation = ({
                         
                         <div className="flex items-center justify-between">
                           <div className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors">
-                            <span className="block">⏱️ Duration: {story.duration}s</span>
-                            <span className="block">🎯 {story.callToAction}</span>
+                            <span className="block">Duration: {story.duration}s</span>
+                            <span className="block">{story.callToAction}</span>
                           </div>
-                          <div className="text-2xl opacity-50 group-hover:opacity-100 transition-opacity transform group-hover:scale-110">
-                            ▶️
+                          <div className="text-sm opacity-50 group-hover:opacity-100 transition-opacity transform group-hover:scale-110">
+                            PLAY
                           </div>
                         </div>
                       </button>
@@ -875,7 +796,7 @@ const StoryNavigation = ({
 
                   <div className="text-center mt-8 text-gray-400 text-sm">
                     <p>Click any story to start • Press ESC to close • RED button in corner to close</p>
-                    <p className="text-green-300 mt-2">🌲🐅 Forest Tiger Back Button - Top Center!</p>
+                    <p className="text-green-300 mt-2">Clean interface with no emojis</p>
                   </div>
                 </div>
               </div>
@@ -907,38 +828,25 @@ const StoryNavigation = ({
         </div>
       )}
 
-      {/* Tiger Stripe Animation Keyframes */}
-      <style jsx>{`
-        @keyframes tigerStripes {
-          0% {
-            background-position: 0px 0px;
-          }
-          100% {
-            background-position: 32px 32px;
-          }
-        }
-      `}</style>
-
       {/* Enhanced DEBUG INFO */}
-      <div className="absolute top-32 left-6 z-[100] text-white/70 text-xs bg-black/70 p-3 rounded">
-        <p>🔍 <strong>FOREST TIGER DEBUG:</strong></p>
+      <div className="absolute top-20 left-6 z-[100] text-white/70 text-xs bg-black/70 p-3 rounded">
+        <p><strong>CLEAN DEBUG:</strong></p>
         <p>Story: {currentStory + 1}/{stories.length}</p>
         <p>Progress: {Math.round(storyProgress * 100)}%</p>
         <p>Paused: <span className={isPaused ? 'text-red-400' : 'text-green-400'}>
-          {isPaused ? '⏸️ YES' : '▶️ NO'}
+          {isPaused ? 'YES' : 'NO'}
         </span></p>
         <p>Menu: <span className={showNavigation ? 'text-blue-400' : 'text-gray-400'}>
-          {showNavigation ? '📖 OPEN' : '❌ CLOSED'}
+          {showNavigation ? 'OPEN' : 'CLOSED'}
         </span></p>
-        <p><span className="text-green-400">🌲 Forest Colors</span></p>
-        <p><span className="text-orange-400">🐅 Tiger Stripes</span></p>
-        <p><em>MEGA BACK BUTTON: Top Center</em></p>
+        <p><em>HOME BUTTON: At bottom of left panel</em></p>
+        <p><em>NO EMOJIS: Clean text only</em></p>
       </div>
     </div>
   );
 };
 
-// Main Component
+// Main Component (unchanged)
 const AdventureStorytellingWebsite = () => {
   const [hasStarted, setHasStarted] = useState(false);
   const [currentStory, setCurrentStory] = useState(0);
