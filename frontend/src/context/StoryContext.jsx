@@ -134,47 +134,49 @@ export const StoryProvider = ({ children }) => {
     }
   ];
 
-  const nextStory = () => {
+  // Fixed functions with proper callbacks
+  const nextStory = React.useCallback(() => {
     setCurrentStory((prev) => (prev + 1) % stories.length);
     setStoryProgress(0);
-  };
+  }, [stories.length]);
 
-  const prevStory = () => {
+  const prevStory = React.useCallback(() => {
     setCurrentStory((prev) => (prev - 1 + stories.length) % stories.length);
     setStoryProgress(0);
-  };
+  }, [stories.length]);
 
-  const goToStory = (index) => {
+  const goToStory = React.useCallback((index) => {
     if (index >= 0 && index < stories.length) {
       setCurrentStory(index);
       setStoryProgress(0);
     }
-  };
+  }, [stories.length]);
 
-  const togglePlay = () => {
+  const togglePlay = React.useCallback(() => {
     setIsPlaying(prev => !prev);
-  };
+  }, []);
 
-  const enterStoryMode = (storyIndex = 0) => {
+  const enterStoryMode = React.useCallback((storyIndex = 0) => {
     setCurrentStory(storyIndex);
     setIsStoryMode(true);
     setStoryProgress(0);
     setIsPlaying(true);
-  };
+  }, []);
 
-  const exitStoryMode = () => {
+  const exitStoryMode = React.useCallback(() => {
     setIsStoryMode(false);
     setIsPlaying(false);
     setStoryProgress(0);
-  };
+  }, []);
 
-  const handleImageError = (storyId) => {
+  const handleImageError = React.useCallback((storyId) => {
     setImageErrors(prev => ({
       ...prev,
       [storyId]: true
     }));
-  };
+  }, []);
 
+  // Fixed useEffect with proper dependencies
   useEffect(() => {
     let interval;
     if (isPlaying && userPreferences.autoplay && isStoryMode) {
@@ -191,7 +193,7 @@ export const StoryProvider = ({ children }) => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isPlaying, userPreferences.autoplay, currentStory, isStoryMode]);
+  }, [isPlaying, userPreferences.autoplay, isStoryMode, nextStory]);
 
   useEffect(() => {
     setStoryProgress(0);
@@ -279,12 +281,12 @@ export const HomePage = () => {
               transform: 'scale(1)'
             }}
             onMouseEnter={(e) => {
-              e.target.style.transform = 'scale(1.03)';
-              e.target.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+              e.currentTarget.style.transform = 'scale(1.03)';
+              e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
             }}
             onMouseLeave={(e) => {
-              e.target.style.transform = 'scale(1)';
-              e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
             }}
           >
             <div style={{ position: 'relative' }}>
@@ -357,7 +359,7 @@ export const HomePage = () => {
   );
 };
 
-// STORY DISPLAY - RED Back Button by Default
+// FIXED Story Display Component
 export const StoryDisplay = () => {
   const { 
     getCurrentStory, 
@@ -377,19 +379,30 @@ export const StoryDisplay = () => {
 
   const currentStoryData = getCurrentStory();
 
-  const handleLeftTap = () => {
+  // Fixed event handlers
+  const handleLeftTap = React.useCallback(() => {
     if (hasPrevStory()) {
       prevStory();
     }
-  };
+  }, [hasPrevStory, prevStory]);
 
-  const handleRightTap = () => {
+  const handleRightTap = React.useCallback(() => {
     if (hasNextStory()) {
       nextStory();
     }
-  };
+  }, [hasNextStory, nextStory]);
 
-  // ESC key and browser back button support
+  const handleExitStoryMode = React.useCallback(() => {
+    console.log('Exit button clicked'); // Debug log
+    exitStoryMode();
+  }, [exitStoryMode]);
+
+  const handleTogglePlay = React.useCallback(() => {
+    console.log('Play/Pause clicked, current state:', isPlaying); // Debug log
+    togglePlay();
+  }, [togglePlay, isPlaying]);
+
+  // Fixed useEffect with proper cleanup
   useEffect(() => {
     const handleKeyPress = (event) => {
       if (event.key === 'Escape') {
@@ -397,13 +410,13 @@ export const StoryDisplay = () => {
       }
     };
 
-    // Add browser back button functionality
-    window.history.pushState({ storyMode: true }, '', window.location.pathname);
-    
     const handlePopState = () => {
       exitStoryMode();
     };
 
+    // Add browser back button functionality
+    window.history.pushState({ storyMode: true }, '', window.location.pathname);
+    
     document.addEventListener('keydown', handleKeyPress);
     window.addEventListener('popstate', handlePopState);
     
@@ -412,6 +425,10 @@ export const StoryDisplay = () => {
       window.removeEventListener('popstate', handlePopState);
     };
   }, [exitStoryMode]);
+
+  if (!currentStoryData) {
+    return <div>Loading...</div>; // Safety check
+  }
 
   return (
     <div className="story-container" style={{ 
@@ -429,7 +446,7 @@ export const StoryDisplay = () => {
         position: 'absolute',
         top: '10px',
         left: '10px',
-        right: '90px', // More space for the red back button
+        right: '90px',
         height: '4px',
         backgroundColor: 'rgba(255,255,255,0.3)',
         borderRadius: '2px',
@@ -464,16 +481,16 @@ export const StoryDisplay = () => {
         ))}
       </div>
 
-      {/* RED BACK/HOME BUTTON - Top Right (RED BY DEFAULT) */}
+      {/* RED EXIT BUTTON - Top Right */}
       <button 
-        onClick={exitStoryMode}
+        onClick={handleExitStoryMode}
         style={{
           position: 'absolute',
           top: '6px',
           right: '8px',
-          background: 'linear-gradient(135deg, #dc3545, #c82333)', // RED by default
+          background: 'linear-gradient(135deg, #dc3545, #c82333)',
           border: '2px solid white',
-          borderRadius: '8px', // Rectangular for better visibility
+          borderRadius: '8px',
           padding: '8px 16px',
           display: 'flex',
           alignItems: 'center',
@@ -484,50 +501,53 @@ export const StoryDisplay = () => {
           color: 'white',
           zIndex: 30,
           transition: 'all 0.2s ease',
-          boxShadow: '0 2px 8px rgba(220, 53, 69, 0.4)', // Red shadow
+          boxShadow: '0 2px 8px rgba(220, 53, 69, 0.4)',
           textShadow: '0 1px 2px rgba(0,0,0,0.5)'
         }}
         onMouseEnter={(e) => {
-          e.target.style.background = 'linear-gradient(135deg, #c82333, #a71e2a)'; // Darker red on hover
-          e.target.style.transform = 'scale(1.05)';
-          e.target.style.boxShadow = '0 4px 12px rgba(220, 53, 69, 0.6)';
+          e.currentTarget.style.background = 'linear-gradient(135deg, #c82333, #a71e2a)';
+          e.currentTarget.style.transform = 'scale(1.05)';
+          e.currentTarget.style.boxShadow = '0 4px 12px rgba(220, 53, 69, 0.6)';
         }}
         onMouseLeave={(e) => {
-          e.target.style.background = 'linear-gradient(135deg, #dc3545, #c82333)'; // Back to original red
-          e.target.style.transform = 'scale(1)';
-          e.target.style.boxShadow = '0 2px 8px rgba(220, 53, 69, 0.4)';
+          e.currentTarget.style.background = 'linear-gradient(135deg, #dc3545, #c82333)';
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.boxShadow = '0 2px 8px rgba(220, 53, 69, 0.4)';
         }}
         title="Back to Home"
       >
         ← Home
       </button>
 
-      {/* Play/Pause Button */}
+      {/* FIXED Play/Pause Button */}
       <button 
-        onClick={togglePlay}
+        onClick={handleTogglePlay}
         style={{
           position: 'absolute',
           top: '25px',
           left: '50%',
           transform: 'translateX(-50%)',
-          background: 'rgba(0,0,0,0.6)',
-          border: '2px solid rgba(255,255,255,0.8)',
+          background: 'rgba(0,0,0,0.8)',
+          border: '2px solid rgba(255,255,255,0.9)',
           color: 'white',
           padding: '8px 12px',
           borderRadius: '20px',
           cursor: 'pointer',
           fontSize: '14px',
           zIndex: 25,
-          transition: 'all 0.2s ease'
+          transition: 'all 0.2s ease',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
         }}
         onMouseEnter={(e) => {
-          e.target.style.background = 'rgba(0,0,0,0.8)';
+          e.currentTarget.style.background = 'rgba(0,0,0,0.9)';
+          e.currentTarget.style.transform = 'translateX(-50%) scale(1.05)';
         }}
         onMouseLeave={(e) => {
-          e.target.style.background = 'rgba(0,0,0,0.6)';
+          e.currentTarget.style.background = 'rgba(0,0,0,0.8)';
+          e.currentTarget.style.transform = 'translateX(-50%) scale(1)';
         }}
       >
-        {isPlaying ? '⏸️' : '▶️'}
+        {isPlaying ? '⏸️ Pause' : '▶️ Play'}
       </button>
 
       {/* Tap Areas */}
@@ -618,24 +638,27 @@ export const StoryDisplay = () => {
   );
 };
 
-// Main App Component
+// Main App Component 
 export const App = () => {
   const { isStoryMode } = useStory();
 
   return (
-    <StoryProvider>
-      <div style={{ 
-        minHeight: '100vh', 
-        backgroundColor: isStoryMode ? '#000' : '#f8f9fa',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: isStoryMode ? '0' : '20px'
-      }}>
-        {isStoryMode ? <StoryDisplay /> : <HomePage />}
-      </div>
-    </StoryProvider>
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundColor: isStoryMode ? '#000' : '#f8f9fa',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: isStoryMode ? '0' : '20px'
+    }}>
+      {isStoryMode ? <StoryDisplay /> : <HomePage />}
+    </div>
   );
 };
 
-export default App;
+// Wrap the entire app with StoryProvider
+export default () => (
+  <StoryProvider>
+    <App />
+  </StoryProvider>
+);
