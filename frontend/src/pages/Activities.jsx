@@ -9,6 +9,7 @@ const Activities = () => {
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
   const [filteredActivities, setFilteredActivities] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('recommended');
 
   const categories = [
     { id: 'all', name: 'All Adventures', icon: '🌟' },
@@ -28,12 +29,43 @@ const Activities = () => {
     { id: 'Extreme', name: 'Extreme' }
   ];
 
-  // Image error handler function
-  const getReliableImage = (category, id, fallbackText) => {
+  // Enhanced image function with category-specific keywords
+  const getReliableImage = (category, id, title, location) => {
+    // Create search-friendly keywords based on the activity
+    const keywords = [];
+    
+    switch (category) {
+      case 'trekking':
+        keywords.push('mountain', 'hiking', 'trek', 'nature', 'landscape');
+        break;
+      case 'wildlife':
+        keywords.push('tiger', 'wildlife', 'safari', 'jungle', 'animals');
+        break;
+      case 'water':
+        keywords.push('water', 'ocean', 'diving', 'beach', 'sea');
+        break;
+      case 'cultural':
+        keywords.push('temple', 'heritage', 'culture', 'architecture', 'historical');
+        break;
+      case 'desert':
+        keywords.push('desert', 'sand', 'dunes', 'camel', 'sunset');
+        break;
+      case 'mountain':
+        keywords.push('mountain', 'snow', 'peak', 'altitude', 'climbing');
+        break;
+      default:
+        keywords.push('adventure', 'travel', 'nature');
+    }
+    
+    // Create location-based keywords
+    const locationKeywords = location.split(',')[0].toLowerCase();
+    
     return {
       primary: `https://picsum.photos/2000/1200?random=${id}`,
-      fallback: `https://placehold.co/2000x1200/4ade80/ffffff?text=${encodeURIComponent(fallbackText)}`,
-      placeholder: `https://via.placeholder.com/2000x1200/059669/ffffff?text=${encodeURIComponent(fallbackText)}`
+      fallback: `https://placehold.co/2000x1200/4ade80/ffffff?text=${encodeURIComponent(title)}`,
+      placeholder: `https://via.placeholder.com/2000x1200/059669/ffffff?text=${encodeURIComponent(title)}`,
+      keywords: keywords.join(', '),
+      searchTerms: `${title} ${location} ${keywords.join(' ')}`.toLowerCase()
     };
   };
 
@@ -43,7 +75,7 @@ const Activities = () => {
       title: "Himalayan Base Camp Trek",
       location: "Uttarakhand, India",
       description: "Challenge yourself with this epic journey to the base camp of majestic Himalayan peaks. Experience breathtaking views, local culture, and the thrill of high-altitude trekking.",
-      images: getReliableImage("trekking", 1, "Himalayan Trek"),
+      images: getReliableImage("trekking", 1, "Himalayan Base Camp Trek", "Uttarakhand, India"),
       duration: "14 Days",
       difficulty: "Hard",
       price: 65000,
@@ -59,7 +91,7 @@ const Activities = () => {
       title: "Kerala Houseboat Experience",
       location: "Alleppey, Kerala",
       description: "Drift through the serene backwaters of Kerala in a traditional houseboat. Enjoy local cuisine, village visits, and the peaceful rhythm of backwater life.",
-      images: getReliableImage("cultural", 2, "Kerala Backwaters"),
+      images: getReliableImage("cultural", 2, "Kerala Houseboat Experience", "Alleppey, Kerala"),
       duration: "3 Days",
       difficulty: "Easy",
       price: 18000,
@@ -75,7 +107,7 @@ const Activities = () => {
       title: "Rajasthan Desert Safari",
       location: "Jaisalmer, Rajasthan",
       description: "Experience the golden dunes of the Thar Desert with camel rides, traditional music, and nights under the starlit desert sky.",
-      images: getReliableImage("desert", 3, "Desert Safari"),
+      images: getReliableImage("desert", 3, "Rajasthan Desert Safari", "Jaisalmer, Rajasthan"),
       duration: "4 Days",
       difficulty: "Medium",
       price: 28000,
@@ -91,7 +123,7 @@ const Activities = () => {
       title: "Goa Water Sports Adventure",
       location: "North Goa",
       description: "Dive into exciting water sports including parasailing, jet skiing, and scuba diving in the crystal clear waters of the Arabian Sea.",
-      images: getReliableImage("water", 4, "Goa Water Sports"),
+      images: getReliableImage("water", 4, "Goa Water Sports Adventure", "North Goa"),
       duration: "5 Days",
       difficulty: "Medium",
       price: 35000,
@@ -107,7 +139,7 @@ const Activities = () => {
       title: "Jim Corbett Wildlife Safari",
       location: "Uttarakhand, India",
       description: "Spot the majestic Bengal tiger and other wildlife in India's oldest national park. Experience the thrill of jungle safaris and nature walks.",
-      images: getReliableImage("wildlife", 5, "Wildlife Safari"),
+      images: getReliableImage("wildlife", 5, "Jim Corbett Wildlife Safari", "Uttarakhand, India"),
       duration: "4 Days",
       difficulty: "Easy",
       price: 22000,
@@ -123,7 +155,7 @@ const Activities = () => {
       title: "Ladakh High Altitude Adventure",
       location: "Leh, Ladakh",
       description: "Explore the mystical landscapes of Ladakh with high-altitude lakes, ancient monasteries, and challenging mountain passes.",
-      images: getReliableImage("mountain", 6, "Ladakh Adventure"),
+      images: getReliableImage("mountain", 6, "Ladakh High Altitude Adventure", "Leh, Ladakh"),
       duration: "12 Days",
       difficulty: "Extreme",
       price: 85000,
@@ -134,13 +166,12 @@ const Activities = () => {
       season: "June-Sept",
       groupSize: "4-8 people"
     },
-    // NEW ACTIVITIES ADDED
     {
       id: 7,
       title: "Andaman Scuba Diving Experience",
       location: "Havelock Island, Andaman",
       description: "Discover the underwater paradise of Andaman with pristine coral reefs, exotic marine life, and crystal-clear tropical waters.",
-      images: getReliableImage("water", 7, "Scuba Diving"),
+      images: getReliableImage("water", 7, "Andaman Scuba Diving Experience", "Havelock Island, Andaman"),
       duration: "6 Days",
       difficulty: "Medium",
       price: 42000,
@@ -156,7 +187,7 @@ const Activities = () => {
       title: "Spiti Valley Winter Expedition",
       location: "Himachal Pradesh, India",
       description: "Journey through the frozen landscapes of Spiti Valley in winter. Experience sub-zero temperatures and stunning snow-covered monasteries.",
-      images: getReliableImage("mountain", 8, "Spiti Winter"),
+      images: getReliableImage("mountain", 8, "Spiti Valley Winter Expedition", "Himachal Pradesh, India"),
       duration: "10 Days",
       difficulty: "Extreme",
       price: 75000,
@@ -172,7 +203,7 @@ const Activities = () => {
       title: "Hampi Heritage Walk",
       location: "Karnataka, India",
       description: "Explore the ancient ruins of Vijayanagara Empire in Hampi. Walk through historical temples, royal complexes, and boulder landscapes.",
-      images: getReliableImage("cultural", 9, "Hampi Heritage"),
+      images: getReliableImage("cultural", 9, "Hampi Heritage Walk", "Karnataka, India"),
       duration: "3 Days",
       difficulty: "Easy",
       price: 15000,
@@ -188,7 +219,7 @@ const Activities = () => {
       title: "Rann of Kutch White Desert",
       location: "Gujarat, India",
       description: "Experience the surreal beauty of the white salt desert during full moon nights. Enjoy folk dances, camel rides, and traditional crafts.",
-      images: getReliableImage("desert", 10, "White Desert"),
+      images: getReliableImage("desert", 10, "Rann of Kutch White Desert", "Gujarat, India"),
       duration: "4 Days",
       difficulty: "Easy",
       price: 24000,
@@ -204,7 +235,7 @@ const Activities = () => {
       title: "Sundarbans Mangrove Safari",
       location: "West Bengal, India",
       description: "Navigate through the world's largest mangrove forest and spot the elusive Royal Bengal Tiger in its natural habitat.",
-      images: getReliableImage("wildlife", 11, "Sundarbans Safari"),
+      images: getReliableImage("wildlife", 11, "Sundarbans Mangrove Safari", "West Bengal, India"),
       duration: "5 Days",
       difficulty: "Medium",
       price: 32000,
@@ -220,7 +251,7 @@ const Activities = () => {
       title: "Rishikesh River Rafting",
       location: "Uttarakhand, India",
       description: "Experience the thrill of white water rafting on the holy Ganges river with rapids ranging from Grade I to Grade IV.",
-      images: getReliableImage("water", 12, "River Rafting"),
+      images: getReliableImage("water", 12, "Rishikesh River Rafting", "Uttarakhand, India"),
       duration: "2 Days",
       difficulty: "Medium",
       price: 12000,
@@ -236,7 +267,7 @@ const Activities = () => {
       title: "Valley of Flowers Trek",
       location: "Uttarakhand, India",
       description: "Trek through the UNESCO World Heritage site filled with endemic alpine flowers and stunning Himalayan views.",
-      images: getReliableImage("trekking", 13, "Valley of Flowers"),
+      images: getReliableImage("trekking", 13, "Valley of Flowers Trek", "Uttarakhand, India"),
       duration: "8 Days",
       difficulty: "Hard",
       price: 45000,
@@ -252,7 +283,7 @@ const Activities = () => {
       title: "Khajuraho Cultural Heritage",
       location: "Madhya Pradesh, India",
       description: "Discover the magnificent temples of Khajuraho known for their intricate sculptures and architectural brilliance.",
-      images: getReliableImage("cultural", 14, "Khajuraho Temples"),
+      images: getReliableImage("cultural", 14, "Khajuraho Cultural Heritage", "Madhya Pradesh, India"),
       duration: "3 Days",
       difficulty: "Easy",
       price: 16000,
@@ -268,7 +299,7 @@ const Activities = () => {
       title: "Kanha Tiger Safari",
       location: "Madhya Pradesh, India",
       description: "Explore one of India's most beautiful national parks and the inspiration for Kipling's Jungle Book stories.",
-      images: getReliableImage("wildlife", 15, "Kanha Tiger Safari"),
+      images: getReliableImage("wildlife", 15, "Kanha Tiger Safari", "Madhya Pradesh, India"),
       duration: "4 Days",
       difficulty: "Easy",
       price: 28000,
@@ -281,6 +312,7 @@ const Activities = () => {
     }
   ];
 
+  // Enhanced filtering and sorting logic
   useEffect(() => {
     let filtered = activities;
 
@@ -294,17 +326,63 @@ const Activities = () => {
       filtered = filtered.filter(activity => activity.difficulty === selectedDifficulty);
     }
 
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter(activity =>
-        activity.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        activity.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        activity.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+    // Enhanced search functionality
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(activity => {
+        // Search in multiple fields
+        const searchFields = [
+          activity.title,
+          activity.location,
+          activity.description,
+          activity.category,
+          activity.difficulty,
+          activity.season,
+          ...activity.features,
+          activity.images.keywords || '',
+          activity.images.searchTerms || ''
+        ].join(' ').toLowerCase();
+
+        // Support partial matches and multiple search terms
+        const searchTerms = searchLower.split(' ').filter(term => term.length > 0);
+        return searchTerms.every(term => searchFields.includes(term));
+      });
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+      case 'price-low':
+        filtered.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-high':
+        filtered.sort((a, b) => b.price - a.price);
+        break;
+      case 'rating':
+        filtered.sort((a, b) => b.rating - a.rating);
+        break;
+      case 'duration':
+        filtered.sort((a, b) => {
+          const aDays = parseInt(a.duration);
+          const bDays = parseInt(b.duration);
+          return aDays - bDays;
+        });
+        break;
+      case 'recommended':
+      default:
+        // Keep original order for recommended
+        break;
     }
 
     setFilteredActivities(filtered);
-  }, [selectedCategory, selectedDifficulty, searchTerm]);
+  }, [selectedCategory, selectedDifficulty, searchTerm, sortBy]);
+
+  // Clear all filters function
+  const handleClearFilters = () => {
+    setSelectedCategory('all');
+    setSelectedDifficulty('all');
+    setSearchTerm('');
+    setSortBy('recommended');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-900 via-emerald-800 to-green-700 relative">
@@ -333,7 +411,7 @@ const Activities = () => {
               across India's most spectacular destinations.
             </motion.p>
 
-            {/* Search Bar */}
+            {/* Enhanced Search Bar */}
             <motion.div
               className="max-w-md mx-auto"
               initial={{ opacity: 0, y: 30 }}
@@ -343,15 +421,30 @@ const Activities = () => {
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Search adventures..."
+                  placeholder="Search by location, activity, difficulty..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-6 py-4 bg-white/10 backdrop-blur-md border border-green-500/30 rounded-full text-white placeholder-green-300 focus:outline-none focus:border-green-400 transition-all duration-300"
+                  className="w-full px-6 py-4 bg-white/10 backdrop-blur-md border border-green-500/30 rounded-full text-white placeholder-green-300 focus:outline-none focus:border-green-400 focus:bg-white/15 transition-all duration-300"
                 />
                 <svg className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-12 top-1/2 transform -translate-y-1/2 w-5 h-5 text-green-300 hover:text-white transition-colors"
+                  >
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
               </div>
+              {searchTerm && (
+                <div className="mt-2 text-sm text-green-300">
+                  Searching for: "{searchTerm}"
+                </div>
+              )}
             </motion.div>
           </div>
         </section>
@@ -374,8 +467,8 @@ const Activities = () => {
                     onClick={() => setSelectedCategory(category.id)}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
                       selectedCategory === category.id
-                        ? 'bg-green-500 text-white shadow-lg'
-                        : 'bg-white/10 text-green-200 hover:bg-white/20'
+                        ? 'bg-green-500 text-white shadow-lg transform scale-105'
+                        : 'bg-white/10 text-green-200 hover:bg-white/20 hover:scale-102'
                     }`}
                   >
                     <span className="mr-2">{category.icon}</span>
@@ -400,8 +493,8 @@ const Activities = () => {
                     onClick={() => setSelectedDifficulty(difficulty.id)}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
                       selectedDifficulty === difficulty.id
-                        ? 'bg-blue-500 text-white shadow-lg'
-                        : 'bg-white/10 text-blue-200 hover:bg-white/20'
+                        ? 'bg-blue-500 text-white shadow-lg transform scale-105'
+                        : 'bg-white/10 text-blue-200 hover:bg-white/20 hover:scale-102'
                     }`}
                   >
                     {difficulty.name}
@@ -415,18 +508,38 @@ const Activities = () => {
         {/* Activities Grid */}
         <section className="pb-20 px-6">
           <div className="container mx-auto">
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
               <h3 className="text-2xl font-bold text-white">
-                {filteredActivities.length} Adventures Found
+                {filteredActivities.length} Adventure{filteredActivities.length !== 1 ? 's' : ''} Found
+                {searchTerm && (
+                  <span className="text-lg text-green-300 font-normal ml-2">
+                    for "{searchTerm}"
+                  </span>
+                )}
               </h3>
               
-              <select className="bg-white/10 backdrop-blur-md border border-green-500/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-green-400">
-                <option value="recommended" className="bg-green-800">Recommended</option>
-                <option value="price-low" className="bg-green-800">Price: Low to High</option>
-                <option value="price-high" className="bg-green-800">Price: High to Low</option>
-                <option value="rating" className="bg-green-800">Highest Rated</option>
-                <option value="duration" className="bg-green-800">Duration</option>
-              </select>
+              <div className="flex gap-3 items-center">
+                {(selectedCategory !== 'all' || selectedDifficulty !== 'all' || searchTerm) && (
+                  <button
+                    onClick={handleClearFilters}
+                    className="text-sm bg-red-500/20 text-red-300 px-3 py-1 rounded-full hover:bg-red-500/30 transition-all duration-300"
+                  >
+                    Clear All Filters
+                  </button>
+                )}
+                
+                <select 
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="bg-white/10 backdrop-blur-md border border-green-500/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-green-400 text-sm"
+                >
+                  <option value="recommended" className="bg-green-800">Recommended</option>
+                  <option value="price-low" className="bg-green-800">Price: Low to High</option>
+                  <option value="price-high" className="bg-green-800">Price: High to Low</option>
+                  <option value="rating" className="bg-green-800">Highest Rated</option>
+                  <option value="duration" className="bg-green-800">Duration</option>
+                </select>
+              </div>
             </div>
 
             {filteredActivities.length > 0 ? (
@@ -459,18 +572,35 @@ const Activities = () => {
                 </div>
                 <h3 className="text-2xl font-bold text-white mb-4">No Adventures Found</h3>
                 <p className="text-green-200 mb-6">
-                  Try adjusting your filters or search terms to discover more adventures.
+                  {searchTerm 
+                    ? `No results found for "${searchTerm}". Try different keywords or clear your search.`
+                    : 'Try adjusting your filters to discover more adventures.'
+                  }
                 </p>
-                <Button
-                  onClick={() => {
-                    setSelectedCategory('all');
-                    setSelectedDifficulty('all');
-                    setSearchTerm('');
-                  }}
-                  variant="secondary"
-                >
-                  Clear All Filters
-                </Button>
+                <div className="space-y-3">
+                  <Button
+                    onClick={handleClearFilters}
+                    variant="secondary"
+                  >
+                    Clear All Filters
+                  </Button>
+                  {searchTerm && (
+                    <div className="text-sm text-green-300">
+                      <p>Try searching for:</p>
+                      <div className="flex flex-wrap justify-center gap-2 mt-2">
+                        {['trekking', 'desert', 'wildlife', 'water sports', 'kerala', 'rajasthan', 'goa'].map(term => (
+                          <button
+                            key={term}
+                            onClick={() => setSearchTerm(term)}
+                            className="px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-xs hover:bg-green-500/30 transition-all"
+                          >
+                            {term}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </motion.div>
             )}
           </div>
