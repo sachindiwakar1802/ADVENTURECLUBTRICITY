@@ -8,6 +8,8 @@ const Gallery = () => {
   const [filteredImages, setFilteredImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [likedImages, setLikedImages] = useState(new Set());
+  const [imageLikeCounts, setImageLikeCounts] = useState({});
 
   const categories = [
     { id: 'all', name: 'All Photos', count: 0 },
@@ -18,7 +20,7 @@ const Gallery = () => {
     { id: 'adventure', name: 'Adventure Sports', count: 0 }
   ];
 
-  const galleryImages = [
+  const initialGalleryImages = [
     {
       id: 1,
       title: "Himalayan Sunrise",
@@ -165,11 +167,93 @@ const Gallery = () => {
     }
   ];
 
+  // Load persistent data from localStorage on component mount
+  useEffect(() => {
+    try {
+      // Load liked images
+      const savedLikedImages = localStorage.getItem('adventure-gallery-liked-images');
+      if (savedLikedImages) {
+        setLikedImages(new Set(JSON.parse(savedLikedImages)));
+      }
+
+      // Load like counts
+      const savedLikeCounts = localStorage.getItem('adventure-gallery-like-counts');
+      if (savedLikeCounts) {
+        setImageLikeCounts(JSON.parse(savedLikeCounts));
+      } else {
+        // Initialize like counts from original data
+        const initialCounts = {};
+        initialGalleryImages.forEach(img => {
+          initialCounts[img.id] = img.likes;
+        });
+        setImageLikeCounts(initialCounts);
+        localStorage.setItem('adventure-gallery-like-counts', JSON.stringify(initialCounts));
+      }
+    } catch (error) {
+      console.error('Error loading data from localStorage:', error);
+      // Initialize with default values if localStorage fails
+      const initialCounts = {};
+      initialGalleryImages.forEach(img => {
+        initialCounts[img.id] = img.likes;
+      });
+      setImageLikeCounts(initialCounts);
+    }
+  }, []);
+
+  // Get gallery images with updated like counts
+  const galleryImages = initialGalleryImages.map(image => ({
+    ...image,
+    likes: imageLikeCounts[image.id] || image.likes,
+    isLiked: likedImages.has(image.id)
+  }));
+
   // Update category counts
   const updatedCategories = categories.map(cat => ({
     ...cat,
     count: cat.id === 'all' ? galleryImages.length : galleryImages.filter(img => img.category === cat.id).length
   }));
+
+  // Handle like functionality - ONLY INCREASE, NO DISLIKE
+  const handleLikeImage = (imageId, e) => {
+    e.stopPropagation(); // Prevent modal from opening when clicking like button
+    
+    // Check if already liked - if yes, do nothing (no dislike functionality)
+    if (likedImages.has(imageId)) {
+      console.log(`💖 Already liked image: ${imageId} - no action taken`);
+      return; // Exit early - already liked, cannot unlike
+    }
+    
+    // Only allow liking if not already liked
+    const newLikedImages = new Set(likedImages);
+    const newLikeCounts = { ...imageLikeCounts };
+    
+    // Like the image (increase count)
+    newLikedImages.add(imageId);
+    newLikeCounts[imageId] = (newLikeCounts[imageId] || 0) + 1;
+    
+    console.log(`💖 Liked image: ${imageId} - count now: ${newLikeCounts[imageId]}`);
+    
+    // Update state
+    setLikedImages(newLikedImages);
+    setImageLikeCounts(newLikeCounts);
+    
+    // Persist to localStorage
+    try {
+      localStorage.setItem('adventure-gallery-liked-images', JSON.stringify(Array.from(newLikedImages)));
+      localStorage.setItem('adventure-gallery-like-counts', JSON.stringify(newLikeCounts));
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+    
+    // Update selected image if it's currently open in modal
+    if (selectedImage && selectedImage.id === imageId) {
+      setSelectedImage({
+        ...selectedImage,
+        likes: newLikeCounts[imageId],
+        isLiked: true
+      });
+    }
+  };
 
   useEffect(() => {
     let filtered = galleryImages;
@@ -177,7 +261,7 @@ const Gallery = () => {
       filtered = galleryImages.filter(image => image.category === selectedCategory);
     }
     setFilteredImages(filtered);
-  }, [selectedCategory]);
+  }, [selectedCategory, imageLikeCounts, likedImages]);
 
   const handleImageClick = (image) => {
     setSelectedImage(image);
@@ -266,6 +350,9 @@ const Gallery = () => {
                 Showing {filteredImages.length} photos
                 {selectedCategory !== 'all' && ` in ${updatedCategories.find(cat => cat.id === selectedCategory)?.name}`}
               </p>
+              <p className="text-green-300 text-sm mt-2">
+                💝 {likedImages.size} photos loved by you • Tap ❤️ to show your love!
+              </p>
             </motion.div>
           </div>
         </section>
@@ -275,18 +362,81 @@ const Gallery = () => {
           <div className="container mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredImages.map((image, index) => (
-                <GalleryCard
+                <motion.div
                   key={image.id}
-                  item={image}
-                  index={index}
-                  onImageClick={handleImageClick}
-                />
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="relative group"
+                >
+                  <GalleryCard
+                    item={image}
+                    index={index}
+                    onImageClick={handleImageClick}
+                  />
+                  
+                  {/* Enhanced Like Button - ONLY SHOWS IF NOT LIKED */}
+                  {!image.isLiked ? (
+                    <button
+                      onClick={(e) => handleLikeImage(image.id, e)}
+                      className="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 text-white transition-all duration-300 flex items-center justify-center hover:scale-110 group-hover:bg-red-500/60"
+                      title="Love this photo"
+                    >
+                      <motion.svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        viewBox="0 0 24 24"
+                        whileHover={{ scale: 1.2 }}
+                        whileTap={{ scale: 1.4 }}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                        />
+                      </motion.svg>
+                    </button>
+                  ) : (
+                    // Show loved indicator for already liked images
+                    <div className="absolute top-3 right-3 w-10 h-10 rounded-full bg-red-500 text-white transition-all duration-300 flex items-center justify-center shadow-lg">
+                      <motion.svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                        animate={{
+                          scale: [1, 1.1, 1],
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          repeatType: "reverse"
+                        }}
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                          clipRule="evenodd"
+                        />
+                      </motion.svg>
+                    </div>
+                  )}
+                  
+                  {/* Like Count Display */}
+                  <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full flex items-center">
+                    <svg className="w-3 h-3 mr-1 text-red-400 fill-current" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                    </svg>
+                    <span>{image.likes}</span>
+                  </div>
+                </motion.div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Image Modal */}
+        {/* Enhanced Image Modal */}
         <AnimatePresence>
           {isModalOpen && selectedImage && (
             <motion.div
@@ -313,6 +463,54 @@ const Gallery = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
+
+                {/* Modal Like Button - ONLY SHOWS IF NOT LIKED */}
+                {!selectedImage.isLiked ? (
+                  <button
+                    onClick={(e) => handleLikeImage(selectedImage.id, e)}
+                    className="absolute top-4 right-16 z-10 w-12 h-12 rounded-full bg-black/50 hover:bg-red-500/70 text-white transition-all duration-300 flex items-center justify-center hover:scale-110"
+                    title="Love this photo"
+                  >
+                    <motion.svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      viewBox="0 0 24 24"
+                      whileHover={{ scale: 1.2 }}
+                      whileTap={{ scale: 1.4 }}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                      />
+                    </motion.svg>
+                  </button>
+                ) : (
+                  // Show loved indicator for already liked images in modal
+                  <div className="absolute top-4 right-16 z-10 w-12 h-12 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg">
+                    <motion.svg
+                      className="w-6 h-6"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                      animate={{
+                        scale: [1, 1.1, 1],
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatType: "reverse"
+                      }}
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                        clipRule="evenodd"
+                      />
+                    </motion.svg>
+                  </div>
+                )}
 
                 {/* Navigation Buttons */}
                 <button
@@ -342,9 +540,17 @@ const Gallery = () => {
                   />
                 </div>
 
-                {/* Image Info */}
+                {/* Enhanced Image Info */}
                 <div className="p-6">
-                  <h3 className="text-2xl font-bold text-white mb-2">{selectedImage.title}</h3>
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-2xl font-bold text-white">{selectedImage.title}</h3>
+                    {selectedImage.isLiked && (
+                      <span className="text-red-400 text-sm bg-red-500/20 px-3 py-1 rounded-full flex items-center">
+                        💖 Loved by you
+                      </span>
+                    )}
+                  </div>
+                  
                   <p className="text-green-200 mb-3 flex items-center">
                     <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
