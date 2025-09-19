@@ -269,9 +269,25 @@ const StoryNavigation = ({
     onStoryChange(nextIndex);
   }, [currentStory, stories.length, onStoryChange]);
 
+  // FIXED: Enhanced Back to Home handler with better debugging
   const handleBackToHome = useCallback((event) => {
-    console.log('🔴 HOME BUTTON CLICKED!');
-    onExit();
+    console.log('🌲 FOREST TIGER BACK BUTTON CLICKED!');
+    console.log('Event received:', event);
+    console.log('onExit function:', onExit);
+    console.log('onExit type:', typeof onExit);
+    
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    if (onExit && typeof onExit === 'function') {
+      console.log('✅ Calling onExit function');
+      onExit();
+      console.log('✅ onExit function called successfully');
+    } else {
+      console.error('❌ onExit function not available or not a function');
+    }
   }, [onExit]);
 
   const handlePauseToggle = useCallback((event) => {
@@ -316,7 +332,7 @@ const StoryNavigation = ({
           handleCloseMenu();
         } else {
           console.log('ESC - exiting story mode');
-          onExit();
+          handleBackToHome();
         }
       }
       if (event.key === 'ArrowLeft' && !showNavigation) {
@@ -333,7 +349,7 @@ const StoryNavigation = ({
 
     document.addEventListener('keydown', handleKeyPress);
     return () => document.removeEventListener('keydown', handleKeyPress);
-  }, [showNavigation, handlePreviousStory, handleNextStory, handlePauseToggle, onExit, handleCloseMenu]);
+  }, [showNavigation, handlePreviousStory, handleNextStory, handlePauseToggle, handleBackToHome, handleCloseMenu]);
 
   return (
     <div className="fixed inset-0 z-50 bg-black">
@@ -379,53 +395,128 @@ const StoryNavigation = ({
         ))}
       </div>
 
-      {/* 3D TOP CONTROLS - REMOVED TEST BUTTON */}
-      <div className="absolute top-6 left-6 z-[300] flex flex-col space-y-4">
-        {/* 3D HOME BUTTON */}
+      {/* HUGE FOREST TIGER BACK BUTTON - TOP CENTER */}
+      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[500]">
         <button
           onClick={handleBackToHome}
-          className="relative transform transition-all duration-200 hover:scale-105 hover:-translate-y-1 active:scale-95 active:translate-y-1"
+          className="relative overflow-hidden transform transition-all duration-300 hover:scale-110 hover:-translate-y-2 active:scale-95 active:translate-y-0 focus:outline-none focus:ring-4 focus:ring-green-400/50"
           style={{
-            background: 'linear-gradient(135deg, #e74c3c, #c0392b, #a93226)',
-            border: 'none',
-            borderRadius: '12px',
-            padding: '12px 20px',
+            width: '200px',
+            height: '80px',
+            background: `
+              linear-gradient(45deg, #228B22 0%, #32CD32 25%, #228B22 50%, #32CD32 75%, #228B22 100%),
+              repeating-linear-gradient(
+                45deg,
+                #228B22,
+                #228B22 8px,
+                #2F5233 8px,
+                #2F5233 16px,
+                #1F4A1F 16px,
+                #1F4A1F 24px,
+                #2F5233 24px,
+                #2F5233 32px
+              )
+            `,
+            backgroundSize: '100% 100%, 40px 40px',
+            border: '4px solid #2F5233',
+            borderRadius: '20px',
             color: 'white',
-            fontSize: '16px',
+            fontSize: '18px',
             fontWeight: 'bold',
             cursor: 'pointer',
             boxShadow: `
-              0 8px 15px rgba(231, 76, 60, 0.4),
-              0 4px 6px rgba(0, 0, 0, 0.1),
-              inset 0 1px 0 rgba(255, 255, 255, 0.2)
+              0 12px 25px rgba(34, 139, 34, 0.4),
+              0 8px 10px rgba(0, 0, 0, 0.3),
+              inset 0 2px 4px rgba(255, 255, 255, 0.2),
+              inset 0 -2px 4px rgba(0, 0, 0, 0.2)
             `,
-            textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
+            textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
+            pointerEvents: 'auto',
+            isolation: 'isolate',
+            position: 'relative'
           }}
           onMouseEnter={(e) => {
-            e.target.style.background = 'linear-gradient(135deg, #ec7063, #e74c3c, #dc3545)';
-            e.target.style.boxShadow = `
-              0 12px 25px rgba(231, 76, 60, 0.6),
-              0 8px 10px rgba(0, 0, 0, 0.2),
-              inset 0 1px 0 rgba(255, 255, 255, 0.3)
+            e.target.style.background = `
+              linear-gradient(45deg, #32CD32 0%, #00FF00 25%, #32CD32 50%, #00FF00 75%, #32CD32 100%),
+              repeating-linear-gradient(
+                45deg,
+                #32CD32,
+                #32CD32 8px,
+                #3F6B3F 8px,
+                #3F6B3F 16px,
+                #2F5A2F 16px,
+                #2F5A2F 24px,
+                #3F6B3F 24px,
+                #3F6B3F 32px
+              )
             `;
+            e.target.style.boxShadow = `
+              0 16px 35px rgba(50, 205, 50, 0.6),
+              0 12px 15px rgba(0, 0, 0, 0.4),
+              inset 0 2px 4px rgba(255, 255, 255, 0.3),
+              inset 0 -2px 4px rgba(0, 0, 0, 0.3)
+            `;
+            e.target.style.borderColor = '#3F6B3F';
           }}
           onMouseLeave={(e) => {
-            e.target.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b, #a93226)';
-            e.target.style.boxShadow = `
-              0 8px 15px rgba(231, 76, 60, 0.4),
-              0 4px 6px rgba(0, 0, 0, 0.1),
-              inset 0 1px 0 rgba(255, 255, 255, 0.2)
+            e.target.style.background = `
+              linear-gradient(45deg, #228B22 0%, #32CD32 25%, #228B22 50%, #32CD32 75%, #228B22 100%),
+              repeating-linear-gradient(
+                45deg,
+                #228B22,
+                #228B22 8px,
+                #2F5233 8px,
+                #2F5233 16px,
+                #1F4A1F 16px,
+                #1F4A1F 24px,
+                #2F5233 24px,
+                #2F5233 32px
+              )
             `;
+            e.target.style.boxShadow = `
+              0 12px 25px rgba(34, 139, 34, 0.4),
+              0 8px 10px rgba(0, 0, 0, 0.3),
+              inset 0 2px 4px rgba(255, 255, 255, 0.2),
+              inset 0 -2px 4px rgba(0, 0, 0, 0.2)
+            `;
+            e.target.style.borderColor = '#2F5233';
           }}
-          title="Back to Home (ESC)"
+          title="🌲 Back to Home - Forest Tiger Style!"
         >
-          <span>←</span>
-          <span>Home</span>
+          {/* Animated Tiger Stripes Overlay */}
+          <div
+            className="absolute inset-0 opacity-30"
+            style={{
+              background: `
+                repeating-linear-gradient(
+                  -45deg,
+                  transparent,
+                  transparent 4px,
+                  rgba(255, 140, 0, 0.3) 4px,
+                  rgba(255, 140, 0, 0.3) 8px,
+                  transparent 8px,
+                  transparent 12px,
+                  rgba(255, 69, 0, 0.3) 12px,
+                  rgba(255, 69, 0, 0.3) 16px
+                )
+              `,
+              backgroundSize: '32px 32px',
+              animation: 'tigerStripes 2s linear infinite',
+              borderRadius: '16px'
+            }}
+          />
+          
+          {/* Button Content */}
+          <div className="relative z-10 flex items-center justify-center space-x-3">
+            <span style={{ fontSize: '24px' }}>🏠</span>
+            <span>BACK TO HOME</span>
+            <span style={{ fontSize: '20px' }}>🐅</span>
+          </div>
         </button>
+      </div>
 
+      {/* 3D TOP CONTROLS - SMALLER NOW */}
+      <div className="absolute top-6 left-6 z-[300] flex flex-col space-y-3">
         {/* 3D PAUSE/PLAY BUTTON */}
         <button
           onClick={handlePauseToggle}
@@ -436,9 +527,9 @@ const StoryNavigation = ({
               : 'linear-gradient(135deg, #f39c12, #e67e22, #d35400)',
             border: 'none',
             borderRadius: '12px',
-            padding: '16px',
+            padding: '12px',
             color: 'white',
-            fontSize: '14px',
+            fontSize: '12px',
             fontWeight: 'bold',
             cursor: 'pointer',
             boxShadow: isPaused 
@@ -455,45 +546,9 @@ const StoryNavigation = ({
             textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            minWidth: '120px',
+            gap: '6px',
+            minWidth: '100px',
             justifyContent: 'center'
-          }}
-          onMouseEnter={(e) => {
-            const newBg = isPaused 
-              ? 'linear-gradient(135deg, #58d68d, #2ecc71, #27ae60)'
-              : 'linear-gradient(135deg, #f4d03f, #f39c12, #e67e22)';
-            const newShadow = isPaused
-              ? `
-                  0 12px 25px rgba(46, 204, 113, 0.6),
-                  0 8px 10px rgba(0, 0, 0, 0.2),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.3)
-                `
-              : `
-                  0 12px 25px rgba(243, 156, 18, 0.6),
-                  0 8px 10px rgba(0, 0, 0, 0.2),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.3)
-                `;
-            e.target.style.background = newBg;
-            e.target.style.boxShadow = newShadow;
-          }}
-          onMouseLeave={(e) => {
-            const newBg = isPaused 
-              ? 'linear-gradient(135deg, #2ecc71, #27ae60, #229954)'
-              : 'linear-gradient(135deg, #f39c12, #e67e22, #d35400)';
-            const newShadow = isPaused
-              ? `
-                  0 8px 15px rgba(46, 204, 113, 0.4),
-                  0 4px 6px rgba(0, 0, 0, 0.1),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.2)
-                `
-              : `
-                  0 8px 15px rgba(243, 156, 18, 0.4),
-                  0 4px 6px rgba(0, 0, 0, 0.1),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.2)
-                `;
-            e.target.style.background = newBg;
-            e.target.style.boxShadow = newShadow;
           }}
           title={isPaused ? "Resume (Spacebar)" : "Pause (Spacebar)"}
         >
@@ -511,9 +566,9 @@ const StoryNavigation = ({
               : 'linear-gradient(135deg, #34495e, #2c3e50, #1b2631)',
             border: 'none',
             borderRadius: '12px',
-            padding: '16px',
+            padding: '12px',
             color: 'white',
-            fontSize: '18px',
+            fontSize: '16px',
             fontWeight: 'bold',
             cursor: 'pointer',
             boxShadow: showNavigation 
@@ -528,47 +583,11 @@ const StoryNavigation = ({
                   inset 0 1px 0 rgba(255, 255, 255, 0.2)
                 `,
             textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
-            minWidth: '60px',
-            minHeight: '60px',
+            minWidth: '50px',
+            minHeight: '50px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
-          }}
-          onMouseEnter={(e) => {
-            const newBg = showNavigation 
-              ? 'linear-gradient(135deg, #5dade2, #3498db, #2980b9)'
-              : 'linear-gradient(135deg, #5d6d7e, #34495e, #2c3e50)';
-            const newShadow = showNavigation
-              ? `
-                  0 12px 25px rgba(52, 152, 219, 0.6),
-                  0 8px 10px rgba(0, 0, 0, 0.2),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.3)
-                `
-              : `
-                  0 12px 25px rgba(52, 73, 94, 0.6),
-                  0 8px 10px rgba(0, 0, 0, 0.2),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.3)
-                `;
-            e.target.style.background = newBg;
-            e.target.style.boxShadow = newShadow;
-          }}
-          onMouseLeave={(e) => {
-            const newBg = showNavigation 
-              ? 'linear-gradient(135deg, #3498db, #2980b9, #1f618d)'
-              : 'linear-gradient(135deg, #34495e, #2c3e50, #1b2631)';
-            const newShadow = showNavigation
-              ? `
-                  0 8px 15px rgba(52, 152, 219, 0.4),
-                  0 4px 6px rgba(0, 0, 0, 0.1),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.2)
-                `
-              : `
-                  0 8px 15px rgba(52, 73, 94, 0.4),
-                  0 4px 6px rgba(0, 0, 0, 0.1),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.2)
-                `;
-            e.target.style.background = newBg;
-            e.target.style.boxShadow = newShadow;
           }}
           title="Menu"
         >
@@ -601,24 +620,6 @@ const StoryNavigation = ({
                 `,
             textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
           }}
-          onMouseEnter={(e) => {
-            if (stories.length <= 1 || showNavigation) return;
-            e.target.style.background = 'linear-gradient(135deg, #bb8fce, #9b59b6, #8e44ad)';
-            e.target.style.boxShadow = `
-              0 12px 25px rgba(155, 89, 182, 0.6),
-              0 8px 10px rgba(0, 0, 0, 0.2),
-              inset 0 1px 0 rgba(255, 255, 255, 0.3)
-            `;
-          }}
-          onMouseLeave={(e) => {
-            if (stories.length <= 1 || showNavigation) return;
-            e.target.style.background = 'linear-gradient(135deg, #9b59b6, #8e44ad, #7d3c98)';
-            e.target.style.boxShadow = `
-              0 8px 15px rgba(155, 89, 182, 0.4),
-              0 4px 6px rgba(0, 0, 0, 0.1),
-              inset 0 1px 0 rgba(255, 255, 255, 0.2)
-            `;
-          }}
           title="Previous Story (Left Arrow)"
         >
           ⬅️
@@ -646,24 +647,6 @@ const StoryNavigation = ({
                   inset 0 1px 0 rgba(255, 255, 255, 0.2)
                 `,
             textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
-          }}
-          onMouseEnter={(e) => {
-            if (stories.length <= 1 || showNavigation) return;
-            e.target.style.background = 'linear-gradient(135deg, #48c9b0, #1abc9c, #16a085)';
-            e.target.style.boxShadow = `
-              0 12px 25px rgba(26, 188, 156, 0.6),
-              0 8px 10px rgba(0, 0, 0, 0.2),
-              inset 0 1px 0 rgba(255, 255, 255, 0.3)
-            `;
-          }}
-          onMouseLeave={(e) => {
-            if (stories.length <= 1 || showNavigation) return;
-            e.target.style.background = 'linear-gradient(135deg, #1abc9c, #16a085, #138d75)';
-            e.target.style.boxShadow = `
-              0 8px 15px rgba(26, 188, 156, 0.4),
-              0 4px 6px rgba(0, 0, 0, 0.1),
-              inset 0 1px 0 rgba(255, 255, 255, 0.2)
-            `;
           }}
           title="Next Story (Right Arrow)"
         >
@@ -703,7 +686,7 @@ const StoryNavigation = ({
       </div>
 
       {/* Main Story Content */}
-      <div className="absolute inset-0 z-50 flex flex-col justify-between p-6 pt-20 pb-32">
+      <div className="absolute inset-0 z-50 flex flex-col justify-between p-6 pt-32 pb-32">
         <div className="flex-1 flex items-end">
           <motion.div 
             className="max-w-4xl ml-48"
@@ -768,9 +751,10 @@ const StoryNavigation = ({
               Progress: {Math.round(storyProgress * 100)}%
             </div>
             
+            {/* Secondary Back Button in Bottom Bar */}
             <button
               onClick={handleBackToHome}
-              className="text-white/60 hover:text-white text-sm flex items-center space-x-1 transition-all duration-200 transform hover:scale-105"
+              className="text-white/60 hover:text-white text-sm flex items-center space-x-1 transition-all duration-200 transform hover:scale-105 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20"
               style={{
                 textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)'
               }}
@@ -781,16 +765,11 @@ const StoryNavigation = ({
           </motion.div>
 
           {stories[currentStory]?.callToAction && (
-            <motion.button 
+            <button 
               className="transform transition-all duration-200 hover:scale-105 hover:-translate-y-1 active:scale-95 active:translate-y-1"
               onClick={() => {
                 console.log('🎯 CTA clicked:', stories[currentStory].callToAction);
               }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
               style={{
                 background: 'linear-gradient(135deg, #667eea, #764ba2, #667eea)',
                 border: 'none',
@@ -807,25 +786,9 @@ const StoryNavigation = ({
                 `,
                 textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
               }}
-              onMouseEnter={(e) => {
-                e.target.style.background = 'linear-gradient(135deg, #7c8cdb, #667eea, #764ba2)';
-                e.target.style.boxShadow = `
-                  0 12px 25px rgba(102, 126, 234, 0.6),
-                  0 8px 10px rgba(0, 0, 0, 0.2),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.3)
-                `;
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = 'linear-gradient(135deg, #667eea, #764ba2, #667eea)';
-                e.target.style.boxShadow = `
-                  0 8px 15px rgba(102, 126, 234, 0.4),
-                  0 4px 6px rgba(0, 0, 0, 0.1),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.2)
-                `;
-              }}
             >
               {stories[currentStory].callToAction}
-            </motion.button>
+            </button>
           )}
         </div>
       </div>
@@ -874,32 +837,6 @@ const StoryNavigation = ({
                                 inset 0 1px 0 rgba(255, 255, 255, 0.1)
                               `
                         }}
-                        onMouseEnter={(e) => {
-                          e.target.style.boxShadow = `
-                            0 16px 35px rgba(255, 255, 255, 0.1),
-                            0 12px 15px rgba(0, 0, 0, 0.3),
-                            inset 0 1px 0 rgba(255, 255, 255, 0.3)
-                          `;
-                          e.target.style.background = currentStory === index
-                            ? 'linear-gradient(135deg, rgba(52, 152, 219, 0.3), rgba(41, 128, 185, 0.3), rgba(31, 97, 141, 0.3))'
-                            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.boxShadow = currentStory === index
-                            ? `
-                                0 12px 25px rgba(52, 152, 219, 0.3),
-                                0 8px 10px rgba(0, 0, 0, 0.2),
-                                inset 0 1px 0 rgba(255, 255, 255, 0.2)
-                              `
-                            : `
-                                0 8px 15px rgba(0, 0, 0, 0.2),
-                                0 4px 6px rgba(0, 0, 0, 0.1),
-                                inset 0 1px 0 rgba(255, 255, 255, 0.1)
-                              `;
-                          e.target.style.background = currentStory === index 
-                            ? 'linear-gradient(135deg, rgba(52, 152, 219, 0.2), rgba(41, 128, 185, 0.2), rgba(31, 97, 141, 0.2))'
-                            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02))';
-                        }}
                       >
                         <div className="flex items-start justify-between mb-3">
                           <h3 className="text-white font-bold text-xl mb-2 flex items-center group-hover:text-blue-200 transition-colors">
@@ -938,7 +875,7 @@ const StoryNavigation = ({
 
                   <div className="text-center mt-8 text-gray-400 text-sm">
                     <p>Click any story to start • Press ESC to close • RED button in corner to close</p>
-                    <p className="text-yellow-300 mt-2">🔥 3D Buttons with hover effects and smooth animations</p>
+                    <p className="text-green-300 mt-2">🌲🐅 Forest Tiger Back Button - Top Center!</p>
                   </div>
                 </div>
               </div>
@@ -970,9 +907,21 @@ const StoryNavigation = ({
         </div>
       )}
 
+      {/* Tiger Stripe Animation Keyframes */}
+      <style jsx>{`
+        @keyframes tigerStripes {
+          0% {
+            background-position: 0px 0px;
+          }
+          100% {
+            background-position: 32px 32px;
+          }
+        }
+      `}</style>
+
       {/* Enhanced DEBUG INFO */}
-      <div className="absolute top-32 left-48 z-[100] text-white/70 text-xs bg-black/70 p-3 rounded">
-        <p>🔍 <strong>3D BUTTON DEBUG:</strong></p>
+      <div className="absolute top-32 left-6 z-[100] text-white/70 text-xs bg-black/70 p-3 rounded">
+        <p>🔍 <strong>FOREST TIGER DEBUG:</strong></p>
         <p>Story: {currentStory + 1}/{stories.length}</p>
         <p>Progress: {Math.round(storyProgress * 100)}%</p>
         <p>Paused: <span className={isPaused ? 'text-red-400' : 'text-green-400'}>
@@ -981,14 +930,15 @@ const StoryNavigation = ({
         <p>Menu: <span className={showNavigation ? 'text-blue-400' : 'text-gray-400'}>
           {showNavigation ? '📖 OPEN' : '❌ CLOSED'}
         </span></p>
-        <p><span className="text-yellow-400">✨ 3D Effects Active</span></p>
-        <p><em>REMOVED: Test Button</em></p>
+        <p><span className="text-green-400">🌲 Forest Colors</span></p>
+        <p><span className="text-orange-400">🐅 Tiger Stripes</span></p>
+        <p><em>MEGA BACK BUTTON: Top Center</em></p>
       </div>
     </div>
   );
 };
 
-// Main Component (unchanged)
+// Main Component
 const AdventureStorytellingWebsite = () => {
   const [hasStarted, setHasStarted] = useState(false);
   const [currentStory, setCurrentStory] = useState(0);
