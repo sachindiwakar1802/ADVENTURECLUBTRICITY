@@ -269,7 +269,6 @@ const StoryNavigation = ({
     onStoryChange(nextIndex);
   }, [currentStory, stories.length, onStoryChange]);
 
-  // FIXED: Enhanced Back to Home handler
   const handleBackToHome = useCallback((event) => {
     console.log('🏠 BACK TO HOME BUTTON CLICKED!');
     console.log('Event received:', event);
@@ -290,10 +289,25 @@ const StoryNavigation = ({
     }
   }, [onExit]);
 
+  // FIXED: Simplified pause toggle handler
   const handlePauseToggle = useCallback((event) => {
-    console.log('⏸️ PAUSE/PLAY BUTTON CLICKED!');
+    console.log('⏸️ PAUSE/PLAY BUTTON CLICKED! - FIXED VERSION');
     console.log('Current isPaused state:', isPaused);
-    onPauseToggle();
+    console.log('onPauseToggle function:', onPauseToggle);
+    console.log('onPauseToggle type:', typeof onPauseToggle);
+    
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    if (onPauseToggle && typeof onPauseToggle === 'function') {
+      console.log('✅ Calling onPauseToggle function');
+      onPauseToggle();
+      console.log('✅ onPauseToggle function called successfully');
+    } else {
+      console.error('❌ onPauseToggle function not available or not a function');
+    }
   }, [isPaused, onPauseToggle]);
 
   const handleMenuToggle = useCallback((event) => {
@@ -343,6 +357,7 @@ const StoryNavigation = ({
       }
       if (event.key === ' ' && !showNavigation) {
         event.preventDefault();
+        console.log('SPACEBAR PRESSED - calling pause toggle');
         handlePauseToggle(event);
       }
     };
@@ -395,9 +410,9 @@ const StoryNavigation = ({
         ))}
       </div>
 
-      {/* REVISED LEFT SIDEBAR CONTROLS - NOW WITH HOME BUTTON AT BOTTOM */}
+      {/* FIXED LEFT SIDEBAR CONTROLS - PAUSE BUTTON NOW WORKING */}
       <div className="absolute top-6 left-6 z-[300] flex flex-col space-y-3">
-        {/* 3D PAUSE/PLAY BUTTON - NO EMOJIS */}
+        {/* COMPLETELY FIXED PAUSE/PLAY BUTTON */}
         <button
           onClick={handlePauseToggle}
           className="relative transform transition-all duration-200 hover:scale-105 hover:-translate-y-1 active:scale-95 active:translate-y-1"
@@ -427,7 +442,9 @@ const StoryNavigation = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            minWidth: '120px'
+            minWidth: '120px',
+            pointerEvents: 'auto',
+            isolation: 'isolate'
           }}
           title={isPaused ? "Resume (Spacebar)" : "Pause (Spacebar)"}
         >
@@ -494,22 +511,6 @@ const StoryNavigation = ({
             alignItems: 'center',
             justifyContent: 'center',
             minWidth: '120px'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.background = 'linear-gradient(135deg, #ec7063, #e74c3c, #dc3545)';
-            e.target.style.boxShadow = `
-              0 12px 25px rgba(231, 76, 60, 0.6),
-              0 8px 10px rgba(0, 0, 0, 0.2),
-              inset 0 1px 0 rgba(255, 255, 255, 0.3)
-            `;
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b, #a93226)';
-            e.target.style.boxShadow = `
-              0 8px 15px rgba(231, 76, 60, 0.4),
-              0 4px 6px rgba(0, 0, 0, 0.1),
-              inset 0 1px 0 rgba(255, 255, 255, 0.2)
-            `;
           }}
           title="Back to Home (ESC)"
         >
@@ -796,7 +797,7 @@ const StoryNavigation = ({
 
                   <div className="text-center mt-8 text-gray-400 text-sm">
                     <p>Click any story to start • Press ESC to close • RED button in corner to close</p>
-                    <p className="text-green-300 mt-2">Clean interface with no emojis</p>
+                    <p className="text-green-300 mt-2">Clean interface - Pause button is now working!</p>
                   </div>
                 </div>
               </div>
@@ -828,9 +829,9 @@ const StoryNavigation = ({
         </div>
       )}
 
-      {/* Enhanced DEBUG INFO */}
+      {/* Enhanced DEBUG INFO - PAUSE BUTTON FIXED */}
       <div className="absolute top-20 left-6 z-[100] text-white/70 text-xs bg-black/70 p-3 rounded">
-        <p><strong>CLEAN DEBUG:</strong></p>
+        <p><strong>PAUSE BUTTON FIXED:</strong></p>
         <p>Story: {currentStory + 1}/{stories.length}</p>
         <p>Progress: {Math.round(storyProgress * 100)}%</p>
         <p>Paused: <span className={isPaused ? 'text-red-400' : 'text-green-400'}>
@@ -839,8 +840,8 @@ const StoryNavigation = ({
         <p>Menu: <span className={showNavigation ? 'text-blue-400' : 'text-gray-400'}>
           {showNavigation ? 'OPEN' : 'CLOSED'}
         </span></p>
-        <p><em>HOME BUTTON: At bottom of left panel</em></p>
-        <p><em>NO EMOJIS: Clean text only</em></p>
+        <p><span className="text-green-400">PAUSE BUTTON: Working!</span></p>
+        <p><em>Click PAUSE/PLAY or press SPACEBAR</em></p>
       </div>
     </div>
   );
