@@ -42,46 +42,136 @@ const useStoryProgress = (duration, hasStarted, isPaused = false) => {
   const resetProgress = () => setProgress(0);
 
   useEffect(() => {
-    console.log('📊 Progress Hook - hasStarted:', hasStarted, 'isPaused:', isPaused);
-    
+    if (hasStarted) {
+      setProgress(0);
+    }
+  }, [hasStarted, duration]);
+
+  useEffect(() => {
     if (!hasStarted || isPaused) {
-      console.log('⏸️ Progress STOPPED - hasStarted:', hasStarted, 'isPaused:', isPaused);
       return;
     }
 
-    setProgress(0);
     const interval = 50;
     const increment = interval / (duration * 1000);
 
-    console.log('▶️ Starting progress with duration:', duration, 'increment:', increment);
-
     const timer = setInterval(() => {
-      setProgress(prev => {
-        const newProgress = prev + increment;        
+      setProgress(prevProgress => {
+        const newProgress = prevProgress + increment;
         if (newProgress >= 1) {
-          console.log('✅ Progress complete!');
-          clearInterval(timer);
           return 1;
         }
         return newProgress;
       });
     }, interval);
 
-    return () => {
-      console.log('🛑 Cleaning up progress timer');
-      clearInterval(timer);
-    };
+    return () => clearInterval(timer);
   }, [duration, hasStarted, isPaused]);
 
   return { progress, resetProgress };
 };
 
-// BULLETPROOF Close Button Component using React Portal
+// BULLETPROOF Native Pause Button Component
+const NativePauseButton = ({ isPaused, onPauseToggle }) => {
+  useEffect(() => {
+    // Create native DOM button that bypasses React entirely
+    const createNativeButton = () => {
+      const button = document.createElement('button');
+      button.id = 'native-pause-button';
+      button.innerHTML = isPaused ? 'PLAY' : 'PAUSE';
+      button.style.cssText = `
+        position: fixed !important;
+        top: 24px !important;
+        left: 24px !important;
+        width: 120px !important;
+        height: 48px !important;
+        background: ${isPaused 
+          ? 'linear-gradient(135deg, #2ecc71, #27ae60, #229954)'
+          : 'linear-gradient(135deg, #f39c12, #e67e22, #d35400)'} !important;
+        border: none !important;
+        border-radius: 12px !important;
+        color: white !important;
+        font-size: 12px !important;
+        font-weight: bold !important;
+        cursor: pointer !important;
+        z-index: 999998 !important;
+        box-shadow: ${isPaused 
+          ? '0 8px 15px rgba(46, 204, 113, 0.4), 0 4px 6px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+          : '0 8px 15px rgba(243, 156, 18, 0.4), 0 4px 6px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)'} !important;
+        transition: all 0.2s ease !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        pointer-events: auto !important;
+        user-select: none !important;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+      `;
+      
+      button.title = isPaused ? 'Resume (Spacebar)' : 'Pause (Spacebar)';
+      button.type = 'button';
+
+      // Add hover effects
+      button.addEventListener('mouseenter', () => {
+        button.style.transform = 'translateY(-1px) scale(1.02)';
+        button.style.boxShadow = isPaused
+          ? '0 12px 25px rgba(46, 204, 113, 0.6), 0 8px 10px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
+          : '0 12px 25px rgba(243, 156, 18, 0.6), 0 8px 10px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)';
+      });
+
+      button.addEventListener('mouseleave', () => {
+        button.style.transform = 'translateY(0px) scale(1)';
+        button.style.boxShadow = isPaused
+          ? '0 8px 15px rgba(46, 204, 113, 0.4), 0 4px 6px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+          : '0 8px 15px rgba(243, 156, 18, 0.4), 0 4px 6px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
+      });
+
+      // Active state
+      button.addEventListener('mousedown', () => {
+        button.style.transform = 'translateY(1px) scale(0.98)';
+      });
+
+      button.addEventListener('mouseup', () => {
+        button.style.transform = 'translateY(-1px) scale(1.02)';
+      });
+
+      // DIRECT click event listener - bypasses React completely
+      button.addEventListener('click', (e) => {
+        console.log('🎯 NATIVE PAUSE BUTTON CLICKED!');
+        console.log('Current isPaused:', isPaused);
+        e.preventDefault();
+        e.stopPropagation();
+        onPauseToggle();
+      });
+
+      return button;
+    };
+
+    // Remove existing button if any
+    const existingButton = document.getElementById('native-pause-button');
+    if (existingButton) {
+      existingButton.remove();
+    }
+
+    // Create and add new button
+    const nativeButton = createNativeButton();
+    document.body.appendChild(nativeButton);
+
+    return () => {
+      const button = document.getElementById('native-pause-button');
+      if (button) {
+        button.remove();
+      }
+    };
+  }, [isPaused, onPauseToggle]);
+
+  return null; // This component renders nothing in React - everything is native DOM
+};
+
+// Close Button Component
 const CloseButton = ({ onClose, show }) => {
   useEffect(() => {
     if (!show) return;
 
-    // Create a native 3D button with direct event listener
     const createNativeButton = () => {
       const button = document.createElement('button');
       button.innerHTML = '✕';
@@ -117,45 +207,7 @@ const CloseButton = ({ onClose, show }) => {
       button.title = 'Close Story Menu';
       button.type = 'button';
 
-      // Add 3D hover effects
-      button.addEventListener('mouseenter', () => {
-        button.style.transform = 'translateY(-2px) scale(1.05)';
-        button.style.boxShadow = `
-          0 12px 25px rgba(220, 53, 69, 0.6),
-          0 8px 10px rgba(0, 0, 0, 0.2),
-          inset 0 1px 0 rgba(255, 255, 255, 0.3)
-        `;
-        button.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b, #a93226)';
-      });
-
-      button.addEventListener('mouseleave', () => {
-        button.style.transform = 'translateY(0px) scale(1)';
-        button.style.boxShadow = `
-          0 8px 15px rgba(220, 53, 69, 0.4),
-          0 4px 6px rgba(0, 0, 0, 0.1),
-          inset 0 1px 0 rgba(255, 255, 255, 0.2)
-        `;
-        button.style.background = 'linear-gradient(135deg, #dc3545, #b02a37, #8b1538)';
-      });
-
-      // Active (pressed) state
-      button.addEventListener('mousedown', () => {
-        button.style.transform = 'translateY(2px) scale(0.98)';
-        button.style.boxShadow = `
-          0 4px 8px rgba(220, 53, 69, 0.6),
-          0 2px 4px rgba(0, 0, 0, 0.2),
-          inset 0 2px 4px rgba(0, 0, 0, 0.1)
-        `;
-      });
-
-      button.addEventListener('mouseup', () => {
-        button.style.transform = 'translateY(-2px) scale(1.05)';
-      });
-
-      // DIRECT click event listener
       button.addEventListener('click', (e) => {
-        console.log('🔥 NATIVE 3D BUTTON CLICKED!');
-        console.log('Event:', e);
         e.preventDefault();
         e.stopPropagation();
         onClose();
@@ -167,24 +219,19 @@ const CloseButton = ({ onClose, show }) => {
     const nativeButton = createNativeButton();
     document.body.appendChild(nativeButton);
 
-    console.log('🚀 Native 3D close button created and added to DOM');
-
     return () => {
       const existingButton = document.getElementById('story-close-button-native');
       if (existingButton) {
         existingButton.remove();
-        console.log('🗑️ Native 3D close button removed from DOM');
       }
     };
   }, [show, onClose]);
 
-  // Portal version with 3D effects as backup
   if (!show) return null;
 
   return createPortal(
     <button
       onClick={(e) => {
-        console.log('🌟 PORTAL 3D BUTTON CLICKED!');
         e.preventDefault();
         e.stopPropagation();
         onClose();
@@ -202,22 +249,6 @@ const CloseButton = ({ onClose, show }) => {
         pointerEvents: 'auto',
         isolation: 'isolate',
         position: 'fixed'
-      }}
-      onMouseEnter={(e) => {
-        e.target.style.background = 'linear-gradient(135deg, #f4d03f, #f39c12, #e67e22)';
-        e.target.style.boxShadow = `
-          0 12px 25px rgba(243, 156, 18, 0.6),
-          0 8px 10px rgba(0, 0, 0, 0.2),
-          inset 0 1px 0 rgba(255, 255, 255, 0.3)
-        `;
-      }}
-      onMouseLeave={(e) => {
-        e.target.style.background = 'linear-gradient(135deg, #f39c12, #e67e22, #d35400)';
-        e.target.style.boxShadow = `
-          0 8px 15px rgba(243, 156, 18, 0.4),
-          0 4px 6px rgba(0, 0, 0, 0.1),
-          inset 0 1px 0 rgba(255, 255, 255, 0.2)
-        `;
       }}
       title="Portal Close Button (Backup)"
     >
@@ -241,10 +272,7 @@ const StoryNavigation = ({
   const [showNavigation, setShowNavigation] = useState(false);
   
   useEffect(() => {
-    console.log('🔄 Auto-play check - isAutoPlay:', isAutoPlay, 'isPaused:', isPaused, 'progress:', storyProgress);
-    
     if (isAutoPlay && !isPaused && storyProgress >= 1) {
-      console.log('⏭️ Auto-advancing to next story');
       const nextStoryIndex = (currentStory + 1) % stories.length;
       const timeout = setTimeout(() => {
         onStoryChange(nextStoryIndex);
@@ -256,73 +284,31 @@ const StoryNavigation = ({
 
   // Event handlers
   const handlePreviousStory = useCallback((event) => {
-    console.log('⬅️ PREVIOUS BUTTON CLICKED!');
     const prevIndex = currentStory === 0 ? stories.length - 1 : currentStory - 1;
-    console.log(`Going from story ${currentStory} to ${prevIndex}`);
     onStoryChange(prevIndex);
   }, [currentStory, stories.length, onStoryChange]);
 
   const handleNextStory = useCallback((event) => {
-    console.log('➡️ NEXT BUTTON CLICKED!');
     const nextIndex = (currentStory + 1) % stories.length;
-    console.log(`Going from story ${currentStory} to ${nextIndex}`);
     onStoryChange(nextIndex);
   }, [currentStory, stories.length, onStoryChange]);
 
   const handleBackToHome = useCallback((event) => {
-    console.log('🏠 BACK TO HOME BUTTON CLICKED!');
-    console.log('Event received:', event);
-    console.log('onExit function:', onExit);
-    console.log('onExit type:', typeof onExit);
-    
     if (event) {
       event.preventDefault();
       event.stopPropagation();
     }
-    
     if (onExit && typeof onExit === 'function') {
-      console.log('✅ Calling onExit function');
       onExit();
-      console.log('✅ onExit function called successfully');
-    } else {
-      console.error('❌ onExit function not available or not a function');
     }
   }, [onExit]);
 
-  // FIXED: Simplified pause toggle handler
-  const handlePauseToggle = useCallback((event) => {
-    console.log('⏸️ PAUSE/PLAY BUTTON CLICKED! - FIXED VERSION');
-    console.log('Current isPaused state:', isPaused);
-    console.log('onPauseToggle function:', onPauseToggle);
-    console.log('onPauseToggle type:', typeof onPauseToggle);
-    
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-    
-    if (onPauseToggle && typeof onPauseToggle === 'function') {
-      console.log('✅ Calling onPauseToggle function');
-      onPauseToggle();
-      console.log('✅ onPauseToggle function called successfully');
-    } else {
-      console.error('❌ onPauseToggle function not available or not a function');
-    }
-  }, [isPaused, onPauseToggle]);
-
   const handleMenuToggle = useCallback((event) => {
-    console.log('📋 MENU BUTTON CLICKED!');
-    console.log('Current showNavigation state:', showNavigation);
     setShowNavigation(prev => !prev);
   }, [showNavigation]);
 
   const handleCloseMenu = useCallback(() => {
-    console.log('❌ CLOSE MENU CALLED - 3D BUTTONS!');
-    console.log('Current showNavigation state:', showNavigation);
-    
     setShowNavigation(false);
-    console.log('✅ Menu should be closed now');
-    
     setTimeout(() => {
       const modalElements = document.querySelectorAll('[data-story-modal="true"]');
       modalElements.forEach(el => {
@@ -332,7 +318,6 @@ const StoryNavigation = ({
   }, [showNavigation]);
 
   const handleStorySelect = useCallback((index) => {
-    console.log(`📖 STORY ${index} SELECTED!`);
     onStoryChange(index);
     setShowNavigation(false);
   }, [onStoryChange]);
@@ -342,10 +327,8 @@ const StoryNavigation = ({
     const handleKeyPress = (event) => {
       if (event.key === 'Escape') {
         if (showNavigation) {
-          console.log('ESC - closing menu');
           handleCloseMenu();
         } else {
-          console.log('ESC - exiting story mode');
           handleBackToHome();
         }
       }
@@ -357,17 +340,20 @@ const StoryNavigation = ({
       }
       if (event.key === ' ' && !showNavigation) {
         event.preventDefault();
-        console.log('SPACEBAR PRESSED - calling pause toggle');
-        handlePauseToggle(event);
+        console.log('🎹 SPACEBAR PRESSED - calling pause toggle');
+        onPauseToggle();
       }
     };
 
     document.addEventListener('keydown', handleKeyPress);
     return () => document.removeEventListener('keydown', handleKeyPress);
-  }, [showNavigation, handlePreviousStory, handleNextStory, handlePauseToggle, handleBackToHome, handleCloseMenu]);
+  }, [showNavigation, handlePreviousStory, handleNextStory, onPauseToggle, handleBackToHome, handleCloseMenu]);
 
   return (
     <div className="fixed inset-0 z-50 bg-black">
+      {/* NATIVE PAUSE BUTTON - GUARANTEED TO WORK */}
+      <NativePauseButton isPaused={isPaused} onPauseToggle={onPauseToggle} />
+
       {/* Background Image */}
       {stories[currentStory]?.backgroundImage && (
         <motion.div
@@ -410,48 +396,9 @@ const StoryNavigation = ({
         ))}
       </div>
 
-      {/* FIXED LEFT SIDEBAR CONTROLS - PAUSE BUTTON NOW WORKING */}
-      <div className="absolute top-6 left-6 z-[300] flex flex-col space-y-3">
-        {/* COMPLETELY FIXED PAUSE/PLAY BUTTON */}
-        <button
-          onClick={handlePauseToggle}
-          className="relative transform transition-all duration-200 hover:scale-105 hover:-translate-y-1 active:scale-95 active:translate-y-1"
-          style={{
-            background: isPaused 
-              ? 'linear-gradient(135deg, #2ecc71, #27ae60, #229954)'
-              : 'linear-gradient(135deg, #f39c12, #e67e22, #d35400)',
-            border: 'none',
-            borderRadius: '12px',
-            padding: '12px 16px',
-            color: 'white',
-            fontSize: '12px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            boxShadow: isPaused 
-              ? `
-                  0 8px 15px rgba(46, 204, 113, 0.4),
-                  0 4px 6px rgba(0, 0, 0, 0.1),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.2)
-                `
-              : `
-                  0 8px 15px rgba(243, 156, 18, 0.4),
-                  0 4px 6px rgba(0, 0, 0, 0.1),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.2)
-                `,
-            textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minWidth: '120px',
-            pointerEvents: 'auto',
-            isolation: 'isolate'
-          }}
-          title={isPaused ? "Resume (Spacebar)" : "Pause (Spacebar)"}
-        >
-          {isPaused ? 'PLAY' : 'PAUSE'}
-        </button>
-
-        {/* 3D MENU BUTTON - NO EMOJIS */}
+      {/* LEFT SIDEBAR CONTROLS - REMOVED REACT PAUSE BUTTON */}
+      <div className="absolute top-20 left-6 z-[300] flex flex-col space-y-3">
+        {/* MENU BUTTON */}
         <button
           onClick={handleMenuToggle}
           className="relative transform transition-all duration-200 hover:scale-105 hover:-translate-y-1 active:scale-95 active:translate-y-1"
@@ -488,7 +435,7 @@ const StoryNavigation = ({
           {showNavigation ? 'CLOSE MENU' : 'STORY MENU'}
         </button>
 
-        {/* 3D HOME BUTTON - MOVED TO BOTTOM, NO EMOJIS */}
+        {/* HOME BUTTON */}
         <button
           onClick={handleBackToHome}
           className="relative transform transition-all duration-200 hover:scale-105 hover:-translate-y-1 active:scale-95 active:translate-y-1"
@@ -518,7 +465,7 @@ const StoryNavigation = ({
         </button>
       </div>
 
-      {/* 3D LEFT SIDE NAVIGATION ARROWS - NO EMOJIS */}
+      {/* LEFT SIDE NAVIGATION ARROWS */}
       <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-[400] flex flex-col space-y-4">
         <button
           onClick={handlePreviousStory}
@@ -577,14 +524,13 @@ const StoryNavigation = ({
         </button>
       </div>
 
-      {/* 3D Navigation Dots */}
+      {/* Navigation Dots */}
       <div className="absolute right-6 top-1/2 transform -translate-y-1/2 z-[200] space-y-3">
         {stories.map((story, index) => (
           <button
             key={index}
             onClick={() => {
               if (!showNavigation) {
-                console.log(`📍 DOT ${index} CLICKED!`);
                 onStoryChange(index);
               }
             }}
@@ -640,7 +586,7 @@ const StoryNavigation = ({
         </div>
       </div>
 
-      {/* Bottom Action Bar with 3D Elements - NO EMOJIS */}
+      {/* Bottom Action Bar */}
       <div className="absolute bottom-6 left-48 right-6 z-[150]">
         <div className="flex items-center justify-between">
           <motion.div 
@@ -674,7 +620,6 @@ const StoryNavigation = ({
               Progress: {Math.round(storyProgress * 100)}%
             </div>
             
-            {/* Secondary Back Button in Bottom Bar - NO EMOJIS */}
             <button
               onClick={handleBackToHome}
               className="text-white/60 hover:text-white text-sm flex items-center space-x-1 transition-all duration-200 transform hover:scale-105 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20"
@@ -690,7 +635,7 @@ const StoryNavigation = ({
             <button 
               className="transform transition-all duration-200 hover:scale-105 hover:-translate-y-1 active:scale-95 active:translate-y-1"
               onClick={() => {
-                console.log('🎯 CTA clicked:', stories[currentStory].callToAction);
+                console.log('CTA clicked:', stories[currentStory].callToAction);
               }}
               style={{
                 background: 'linear-gradient(135deg, #667eea, #764ba2, #667eea)',
@@ -715,7 +660,7 @@ const StoryNavigation = ({
         </div>
       </div>
 
-      {/* BULLETPROOF Navigation Menu with 3D Story Cards - NO EMOJIS */}
+      {/* Navigation Menu */}
       <AnimatePresence>
         {showNavigation && (
           <>
@@ -796,8 +741,7 @@ const StoryNavigation = ({
                   </div>
 
                   <div className="text-center mt-8 text-gray-400 text-sm">
-                    <p>Click any story to start • Press ESC to close • RED button in corner to close</p>
-                    <p className="text-green-300 mt-2">Clean interface - Pause button is now working!</p>
+                    <p>Click any story to start • Press ESC to close • Native pause button guaranteed to work!</p>
                   </div>
                 </div>
               </div>
@@ -828,26 +772,11 @@ const StoryNavigation = ({
           />
         </div>
       )}
-
-      {/* Enhanced DEBUG INFO - PAUSE BUTTON FIXED */}
-      <div className="absolute top-20 left-6 z-[100] text-white/70 text-xs bg-black/70 p-3 rounded">
-        <p><strong>PAUSE BUTTON FIXED:</strong></p>
-        <p>Story: {currentStory + 1}/{stories.length}</p>
-        <p>Progress: {Math.round(storyProgress * 100)}%</p>
-        <p>Paused: <span className={isPaused ? 'text-red-400' : 'text-green-400'}>
-          {isPaused ? 'YES' : 'NO'}
-        </span></p>
-        <p>Menu: <span className={showNavigation ? 'text-blue-400' : 'text-gray-400'}>
-          {showNavigation ? 'OPEN' : 'CLOSED'}
-        </span></p>
-        <p><span className="text-green-400">PAUSE BUTTON: Working!</span></p>
-        <p><em>Click PAUSE/PLAY or press SPACEBAR</em></p>
-      </div>
     </div>
   );
 };
 
-// Main Component (unchanged)
+// Main Component
 const AdventureStorytellingWebsite = () => {
   const [hasStarted, setHasStarted] = useState(false);
   const [currentStory, setCurrentStory] = useState(0);
@@ -868,36 +797,32 @@ const AdventureStorytellingWebsite = () => {
   }, []);
 
   const handleStoryChange = useCallback((newIndex) => {
-    console.log('📚 Story changing from', currentStory, 'to', newIndex);
     setCurrentStory(newIndex);
     resetProgress();
   }, [currentStory, resetProgress]);
 
   const startExperience = useCallback(() => {
-    console.log('🚀 Starting experience...');
     setHasStarted(true);
     setIsPaused(false);
   }, []);
 
   const exitStoryMode = useCallback(() => {
-    console.log('🏠 EXIT STORY MODE CALLED!');
     setHasStarted(false);
     setCurrentStory(0);
     setIsPaused(false);
     resetProgress();
-    console.log('✅ Story mode exited');
   }, [resetProgress]);
 
+  // BULLETPROOF pause toggle
   const handlePauseToggle = useCallback(() => {
-    console.log('⏯️ PAUSE TOGGLE CALLED! Current state:', isPaused);
-    setIsPaused(prev => {
-      const newState = !prev;
-      console.log('New pause state:', newState);
+    console.log('🔄 MAIN COMPONENT: Pause toggle called');
+    console.log('🔄 Current isPaused:', isPaused);
+    setIsPaused(prevPaused => {
+      const newState = !prevPaused;
+      console.log('🔄 New isPaused state:', newState);
       return newState;
     });
   }, [isPaused]);
-
-  console.log('🔍 App State:', { hasStarted, currentStory, isLoading, isPaused, progress: Math.round(progress * 100) + '%' });
 
   if (isLoading) {
     return <LoadingScreen />;
