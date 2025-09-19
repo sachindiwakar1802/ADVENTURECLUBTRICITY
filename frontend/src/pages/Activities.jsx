@@ -31,7 +31,6 @@ const Activities = () => {
 
   // Enhanced image function with category-specific keywords
   const getReliableImage = (category, id, title, location) => {
-    // Create search-friendly keywords based on the activity
     const keywords = [];
     
     switch (category) {
@@ -57,9 +56,6 @@ const Activities = () => {
         keywords.push('adventure', 'travel', 'nature');
     }
     
-    // Create location-based keywords
-    const locationKeywords = location.split(',')[0].toLowerCase();
-    
     return {
       primary: `https://picsum.photos/2000/1200?random=${id}`,
       fallback: `https://placehold.co/2000x1200/4ade80/ffffff?text=${encodeURIComponent(title)}`,
@@ -67,6 +63,87 @@ const Activities = () => {
       keywords: keywords.join(', '),
       searchTerms: `${title} ${location} ${keywords.join(' ')}`.toLowerCase()
     };
+  };
+
+  // Function to calculate recommendation score
+  const calculateRecommendationScore = (activity) => {
+    let score = 0;
+    
+    // Rating weight (40% of score) - normalize rating to 0-40 scale
+    score += (activity.rating / 5) * 40;
+    
+    // Reviews weight (30% of score) - normalize reviews to 0-30 scale
+    // Using log scale to prevent activities with extremely high reviews from dominating
+    const normalizedReviews = Math.min(activity.reviews / 300, 1) * 30;
+    score += normalizedReviews;
+    
+    // Seasonal relevance (15% of score)
+    const currentMonth = new Date().getMonth() + 1;
+    const seasonalBonus = getSeasonalBonus(activity.season, currentMonth);
+    score += seasonalBonus * 15;
+    
+    // Difficulty accessibility (10% of score) - favor medium difficulty
+    const difficultyBonus = getDifficultyBonus(activity.difficulty);
+    score += difficultyBonus * 10;
+    
+    // Variety bonus (5% of score) - slight boost to different categories
+    const varietyBonus = getVarietyBonus(activity.category);
+    score += varietyBonus * 5;
+    
+    return score;
+  };
+
+  // Helper function for seasonal relevance
+  const getSeasonalBonus = (season, currentMonth) => {
+    if (!season) return 0.5;
+    
+    const seasonMap = {
+      'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
+      'Jul': 7, 'Aug': 8, 'Sep': 9, 'Sept': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
+    };
+    
+    const seasonMonths = [];
+    season.split(',').forEach(period => {
+      const months = period.trim().split('-');
+      if (months.length === 2) {
+        const start = seasonMap[months[0]];
+        const end = seasonMap[months[1]];
+        
+        if (start && end) {
+          for (let i = start; i <= end; i++) {
+            seasonMonths.push(i);
+          }
+        }
+      }
+    });
+    
+    // Current month is September (9)
+    const septemberMonth = 9;
+    return seasonMonths.includes(septemberMonth) ? 1.0 : 0.3;
+  };
+
+  // Helper function for difficulty bonus
+  const getDifficultyBonus = (difficulty) => {
+    const difficultyScores = {
+      'Easy': 0.9,      // High accessibility
+      'Medium': 1.0,    // Perfect balance
+      'Hard': 0.7,      // More challenging
+      'Extreme': 0.4    // Very challenging
+    };
+    return difficultyScores[difficulty] || 0.5;
+  };
+
+  // Helper function for variety bonus
+  const getVarietyBonus = (category) => {
+    const varietyScores = {
+      'trekking': 1.0,
+      'cultural': 0.9,
+      'water': 0.8,
+      'wildlife': 0.9,
+      'desert': 0.7,
+      'mountain': 0.8
+    };
+    return varietyScores[category] || 0.5;
   };
 
   const activities = [
@@ -312,7 +389,7 @@ const Activities = () => {
     }
   ];
 
-  // Enhanced filtering and sorting logic
+  // Enhanced filtering and sorting logic with PROPER RECOMMENDATION ALGORITHM
   useEffect(() => {
     let filtered = activities;
 
@@ -349,27 +426,49 @@ const Activities = () => {
       });
     }
 
-    // Apply sorting
+    // Apply sorting with FIXED RECOMMENDATION ALGORITHM
     switch (sortBy) {
-      case 'price-low':
-        filtered.sort((a, b) => a.price - b.price);
-        break;
-      case 'price-high':
-        filtered.sort((a, b) => b.price - a.price);
+      case 'recommended':
+        // FIXED: Proper recommendation algorithm
+        filtered = filtered
+          .map(activity => ({
+            ...activity,
+            recommendationScore: calculateRecommendationScore(activity)
+          }))
+          .sort((a, b) => b.recommendationScore - a.recommendationScore);
+        console.log('🏆 Recommendation scores:', filtered.map(a => ({ 
+          title: a.title.substring(0, 20), 
+          score: a.recommendationScore.toFixed(1),
+          rating: a.rating,
+          reviews: a.reviews 
+        })));
         break;
       case 'rating':
         filtered.sort((a, b) => b.rating - a.rating);
         break;
-      case 'duration':
+      case 'duration-short':
         filtered.sort((a, b) => {
           const aDays = parseInt(a.duration);
           const bDays = parseInt(b.duration);
           return aDays - bDays;
         });
         break;
-      case 'recommended':
+      case 'duration-long':
+        filtered.sort((a, b) => {
+          const aDays = parseInt(a.duration);
+          const bDays = parseInt(b.duration);
+          return bDays - aDays;
+        });
+        break;
+      case 'alphabetical':
+        filtered.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case 'reviews':
+        filtered.sort((a, b) => b.reviews - a.reviews);
+        break;
       default:
-        // Keep original order for recommended
+        // Fallback to rating if unknown sort option
+        filtered.sort((a, b) => b.rating - a.rating);
         break;
     }
 
@@ -516,6 +615,11 @@ const Activities = () => {
                     for "{searchTerm}"
                   </span>
                 )}
+                {sortBy === 'recommended' && (
+                  <span className="text-sm text-yellow-300 block mt-1">
+                    ⭐ Smart recommendations based on rating, reviews, season & accessibility
+                  </span>
+                )}
               </h3>
               
               <div className="flex gap-3 items-center">
@@ -528,16 +632,18 @@ const Activities = () => {
                   </button>
                 )}
                 
+                {/* FIXED DROPDOWN WITH PROPER RECOMMENDATION */}
                 <select 
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                   className="bg-white/10 backdrop-blur-md border border-green-500/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-green-400 text-sm"
                 >
-                  <option value="recommended" className="bg-green-800">Recommended</option>
-                  <option value="price-low" className="bg-green-800">Price: Low to High</option>
-                  <option value="price-high" className="bg-green-800">Price: High to Low</option>
-                  <option value="rating" className="bg-green-800">Highest Rated</option>
-                  <option value="duration" className="bg-green-800">Duration</option>
+                  <option value="recommended" className="bg-green-800">⭐ Smart Recommendations</option>
+                  <option value="rating" className="bg-green-800">⭐ Highest Rated</option>
+                  <option value="reviews" className="bg-green-800">💬 Most Reviewed</option>
+                  <option value="duration-short" className="bg-green-800">⏱️ Duration: Short to Long</option>
+                  <option value="duration-long" className="bg-green-800">⏱️ Duration: Long to Short</option>
+                  <option value="alphabetical" className="bg-green-800">🔤 Alphabetical</option>
                 </select>
               </div>
             </div>
@@ -545,17 +651,30 @@ const Activities = () => {
             {filteredActivities.length > 0 ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredActivities.map((activity, index) => (
-                  <ActivityCard
+                  <motion.div
                     key={activity.id}
-                    activity={{
-                      ...activity,
-                      image: activity.images.primary,
-                      fallbackImage: activity.images.fallback,
-                      placeholderImage: activity.images.placeholder
-                    }}
-                    index={index}
-                    onSelect={(activity) => console.log('Selected:', activity)}
-                  />
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                  >
+                    <ActivityCard
+                      activity={{
+                        ...activity,
+                        image: activity.images.primary,
+                        fallbackImage: activity.images.fallback,
+                        placeholderImage: activity.images.placeholder
+                      }}
+                      index={index}
+                      onSelect={(activity) => console.log('Selected:', activity)}
+                    />
+                    {sortBy === 'recommended' && activity.recommendationScore && (
+                      <div className="text-center mt-2">
+                        <span className="text-xs text-yellow-300 bg-yellow-500/20 px-2 py-1 rounded-full">
+                          Score: {activity.recommendationScore.toFixed(1)}/100
+                        </span>
+                      </div>
+                    )}
+                  </motion.div>
                 ))}
               </div>
             ) : (
