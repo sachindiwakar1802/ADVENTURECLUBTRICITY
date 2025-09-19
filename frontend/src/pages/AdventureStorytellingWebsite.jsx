@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { createPortal } from 'react-dom';
 import LoadingScreen from '../components/ui/LoadingScreen';
 import WelcomeScreen from '../components/ui/WelcomeScreen';
 
-// Stories Data (unchanged)
+// Stories Data
 const stories = [
   {
     title: 'Mountain Adventure',
@@ -35,6 +36,161 @@ const stories = [
   }
 ];
 
+// Progress Hook
+const useStoryProgress = (duration, hasStarted, isPaused = false) => {
+  const [progress, setProgress] = useState(0);
+  const resetProgress = () => setProgress(0);
+
+  useEffect(() => {
+    console.log('📊 Progress Hook - hasStarted:', hasStarted, 'isPaused:', isPaused);
+    
+    if (!hasStarted || isPaused) {
+      console.log('⏸️ Progress STOPPED - hasStarted:', hasStarted, 'isPaused:', isPaused);
+      return;
+    }
+
+    setProgress(0);
+    const interval = 50;
+    const increment = interval / (duration * 1000);
+
+    console.log('▶️ Starting progress with duration:', duration, 'increment:', increment);
+
+    const timer = setInterval(() => {
+      setProgress(prev => {
+        const newProgress = prev + increment;        
+        if (newProgress >= 1) {
+          console.log('✅ Progress complete!');
+          clearInterval(timer);
+          return 1;
+        }
+        return newProgress;
+      });
+    }, interval);
+
+    return () => {
+      console.log('🛑 Cleaning up progress timer');
+      clearInterval(timer);
+    };
+  }, [duration, hasStarted, isPaused]);
+
+  return { progress, resetProgress };
+};
+
+// BULLETPROOF Close Button Component using React Portal
+const CloseButton = ({ onClose, show }) => {
+  useEffect(() => {
+    if (!show) return;
+
+    // Create a native DOM button with direct event listener
+    const createNativeButton = () => {
+      const button = document.createElement('button');
+      button.innerHTML = '✕';
+      button.style.cssText = `
+        position: fixed !important;
+        top: 20px !important;
+        right: 20px !important;
+        width: 80px !important;
+        height: 80px !important;
+        background: linear-gradient(135deg, #dc3545, #c82333) !important;
+        border: 4px solid white !important;
+        border-radius: 50% !important;
+        color: white !important;
+        font-size: 32px !important;
+        font-weight: bold !important;
+        cursor: pointer !important;
+        z-index: 999999 !important;
+        box-shadow: 0 4px 20px rgba(220, 53, 69, 0.6) !important;
+        transition: all 0.2s ease !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        pointer-events: auto !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+      `;
+      
+      button.id = 'story-close-button-native';
+      button.title = 'Close Story Menu';
+      button.type = 'button';
+
+      // Add hover effects
+      button.addEventListener('mouseenter', () => {
+        button.style.transform = 'scale(1.1)';
+        button.style.boxShadow = '0 6px 25px rgba(220, 53, 69, 0.8)';
+        button.style.background = 'linear-gradient(135deg, #c82333, #a71e2a)';
+      });
+
+      button.addEventListener('mouseleave', () => {
+        button.style.transform = 'scale(1)';
+        button.style.boxShadow = '0 4px 20px rgba(220, 53, 69, 0.6)';
+        button.style.background = 'linear-gradient(135deg, #dc3545, #c82333)';
+      });
+
+      // DIRECT click event listener
+      button.addEventListener('click', (e) => {
+        console.log('🔥 NATIVE BUTTON CLICKED!');
+        console.log('Event:', e);
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      });
+
+      // Prevent all other events from interfering
+      button.addEventListener('mousedown', (e) => {
+        console.log('🔥 NATIVE BUTTON MOUSEDOWN!');
+        e.stopPropagation();
+      });
+
+      button.addEventListener('mouseup', (e) => {
+        console.log('🔥 NATIVE BUTTON MOUSEUP!');
+        e.stopPropagation();
+      });
+
+      return button;
+    };
+
+    const nativeButton = createNativeButton();
+    document.body.appendChild(nativeButton);
+
+    console.log('🚀 Native close button created and added to DOM');
+
+    return () => {
+      const existingButton = document.getElementById('story-close-button-native');
+      if (existingButton) {
+        existingButton.remove();
+        console.log('🗑️ Native close button removed from DOM');
+      }
+    };
+  }, [show, onClose]);
+
+  // Also render a React portal version as backup
+  if (!show) return null;
+
+  return createPortal(
+    <button
+      onClick={(e) => {
+        console.log('🌟 PORTAL BUTTON CLICKED!');
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }}
+      className="fixed top-4 left-4 w-20 h-20 bg-yellow-500 hover:bg-yellow-600 text-black rounded-full flex items-center justify-center text-2xl font-bold shadow-2xl transition-all duration-300 border-4 border-black hover:scale-110 z-[999999]"
+      style={{
+        pointerEvents: 'auto',
+        isolation: 'isolate',
+        position: 'fixed',
+        zIndex: 999999
+      }}
+      title="Portal Close Button (Backup)"
+    >
+      ✕
+    </button>,
+    document.body
+  );
+};
+
 // Story Navigation Component
 const StoryNavigation = ({ 
   stories, 
@@ -42,75 +198,112 @@ const StoryNavigation = ({
   onStoryChange, 
   storyProgress, 
   isAutoPlay = true,
-  onExit
+  onExit,
+  isPaused,
+  onPauseToggle
 }) => {
   const [showNavigation, setShowNavigation] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
   
   useEffect(() => {
+    console.log('🔄 Auto-play check - isAutoPlay:', isAutoPlay, 'isPaused:', isPaused, 'progress:', storyProgress);
+    
     if (isAutoPlay && !isPaused && storyProgress >= 1) {
+      console.log('⏭️ Auto-advancing to next story');
       const nextStoryIndex = (currentStory + 1) % stories.length;
-      setTimeout(() => onStoryChange(nextStoryIndex), 1500);
+      const timeout = setTimeout(() => {
+        onStoryChange(nextStoryIndex);
+      }, 1500);
+      
+      return () => clearTimeout(timeout);
     }
   }, [storyProgress, currentStory, stories.length, isAutoPlay, isPaused, onStoryChange]);
 
-  // FIXED: Direct event handler with proper debugging
-  const handleBackToHome = (event) => {
-    console.log('🔴 RED BUTTON CLICKED!'); // Debug log
-    console.log('Event:', event); // Debug event
-    console.log('onExit function:', onExit); // Debug function
-    
-    // Prevent any event bubbling
-    event.preventDefault();
-    event.stopPropagation();
-    
-    // Call the exit function
-    if (onExit && typeof onExit === 'function') {
-      console.log('✅ Calling onExit function');
-      onExit();
-    } else {
-      console.error('❌ onExit function not available or not a function');
-    }
-  };
+  // Event handlers
+  const handlePreviousStory = useCallback((event) => {
+    console.log('⬅️ PREVIOUS BUTTON CLICKED!');
+    const prevIndex = currentStory === 0 ? stories.length - 1 : currentStory - 1;
+    console.log(`Going from story ${currentStory} to ${prevIndex}`);
+    onStoryChange(prevIndex);
+  }, [currentStory, stories.length, onStoryChange]);
 
-  // Browser back button and keyboard support
+  const handleNextStory = useCallback((event) => {
+    console.log('➡️ NEXT BUTTON CLICKED!');
+    const nextIndex = (currentStory + 1) % stories.length;
+    console.log(`Going from story ${currentStory} to ${nextIndex}`);
+    onStoryChange(nextIndex);
+  }, [currentStory, stories.length, onStoryChange]);
+
+  const handleBackToHome = useCallback((event) => {
+    console.log('🔴 HOME BUTTON CLICKED!');
+    onExit();
+  }, [onExit]);
+
+  const handlePauseToggle = useCallback((event) => {
+    console.log('⏸️ PAUSE/PLAY BUTTON CLICKED!');
+    console.log('Current isPaused state:', isPaused);
+    onPauseToggle();
+  }, [isPaused, onPauseToggle]);
+
+  const handleMenuToggle = useCallback((event) => {
+    console.log('📋 MENU BUTTON CLICKED!');
+    console.log('Current showNavigation state:', showNavigation);
+    setShowNavigation(prev => !prev);
+  }, [showNavigation]);
+
+  // BULLETPROOF close handler
+  const handleCloseMenu = useCallback(() => {
+    console.log('❌ CLOSE MENU CALLED - NATIVE + PORTAL!');
+    console.log('Current showNavigation state:', showNavigation);
+    
+    setShowNavigation(false);
+    console.log('✅ Menu should be closed now');
+    
+    // Force update document to ensure menu is closed
+    setTimeout(() => {
+      const modalElements = document.querySelectorAll('[data-story-modal="true"]');
+      modalElements.forEach(el => {
+        el.style.display = 'none';
+      });
+    }, 100);
+  }, [showNavigation]);
+
+  const handleStorySelect = useCallback((index) => {
+    console.log(`📖 STORY ${index} SELECTED!`);
+    onStoryChange(index);
+    setShowNavigation(false);
+  }, [onStoryChange]);
+
+  // Browser controls
   useEffect(() => {
     const handleKeyPress = (event) => {
       if (event.key === 'Escape') {
-        console.log('Escape key pressed - exiting story mode');
-        onExit && onExit();
+        if (showNavigation) {
+          console.log('ESC - closing menu');
+          handleCloseMenu();
+        } else {
+          console.log('ESC - exiting story mode');
+          onExit();
+        }
+      }
+      if (event.key === 'ArrowLeft' && !showNavigation) {
+        handlePreviousStory(event);
+      }
+      if (event.key === 'ArrowRight' && !showNavigation) {
+        handleNextStory(event);
+      }
+      if (event.key === ' ' && !showNavigation) {
+        event.preventDefault();
+        handlePauseToggle(event);
       }
     };
 
-    const handlePopState = (event) => {
-      console.log('Browser back button pressed - exiting story mode');
-      onExit && onExit();
-      event.preventDefault();
-      return false;
-    };
-
-    window.history.pushState({ storyMode: true }, '', window.location.pathname);
-    
     document.addEventListener('keydown', handleKeyPress);
-    window.addEventListener('popstate', handlePopState);
-    
-    return () => {
-      document.removeEventListener('keydown', handleKeyPress);
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [onExit]);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [showNavigation, handlePreviousStory, handleNextStory, handlePauseToggle, onExit, handleCloseMenu]);
 
-  const handlePauseToggle = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setIsPaused(!isPaused);
-    console.log('Pause toggled:', !isPaused);
-  };
-
-  // TESTING: Simple test button
   const testFunction = () => {
     console.log('🧪 TEST BUTTON WORKS!');
-    alert('Test button clicked - this proves React events are working');
+    alert(`Test - isPaused: ${isPaused}, showNavigation: ${showNavigation}`);
   };
 
   return (
@@ -119,7 +312,7 @@ const StoryNavigation = ({
       {stories[currentStory]?.backgroundImage && (
         <motion.div
           key={`bg-${currentStory}`}
-          className="absolute inset-0"
+          className="absolute inset-0 z-10"
           initial={{ scale: 1.1, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
@@ -134,131 +327,133 @@ const StoryNavigation = ({
         </motion.div>
       )}
 
-      {/* ADJUSTED Story Progress Bars - Now leaves space on LEFT */}
-      <div className="absolute top-6 left-40 right-6 z-60 flex space-x-2">
+      {/* Story Progress Bars */}
+      <div className="absolute top-6 left-40 right-6 z-[200] flex space-x-2">
         {stories.map((_, index) => (
           <div key={index} className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
             <motion.div 
-              className="h-full bg-white rounded-full"
+              className={`h-full rounded-full transition-all duration-200 ${
+                isPaused ? 'bg-yellow-400' : 'bg-white'
+              }`}
               initial={{ width: 0 }}
               animate={{ 
                 width: index === currentStory 
                   ? `${storyProgress * 100}%` 
                   : index < currentStory ? '100%' : '0%'
               }}
-              transition={{ duration: 0.3 }}
+              transition={{ 
+                duration: isPaused ? 0 : 0.3,
+                ease: "linear"
+              }}
             />
           </div>
         ))}
       </div>
 
-      {/* MOVED TO LEFT: All Top Controls */}
-      <div className="absolute top-6 left-6 z-[100] flex flex-col space-y-3">
-        {/* TEST BUTTON - Remove after confirming it works */}
+      {/* All Top Controls */}
+      <div className="absolute top-6 left-6 z-[300] flex flex-col space-y-3">
         <button
           onClick={testFunction}
-          className="bg-green-500 text-white px-4 py-2 rounded text-sm"
+          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm transition-colors"
         >
           TEST
         </button>
 
-        {/* RED BACK TO HOME BUTTON - Now on LEFT */}
         <button
           onClick={handleBackToHome}
-          className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 backdrop-blur-sm text-white px-4 py-2 rounded-lg font-semibold shadow-lg transition-all duration-300 flex items-center space-x-2 cursor-pointer"
-          style={{ 
-            zIndex: 1000,
-            pointerEvents: 'auto',
-            position: 'relative'
-          }}
+          className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-lg font-semibold shadow-lg transition-all duration-300 flex items-center space-x-2"
           title="Back to Home (ESC)"
         >
           <span>←</span>
           <span>Home</span>
         </button>
 
-        {/* Pause/Play Button - Now on LEFT */}
         <button
           onClick={handlePauseToggle}
-          className="bg-black/50 backdrop-blur-sm text-white p-3 rounded-full hover:bg-black/70 transition-all duration-300 cursor-pointer"
-          style={{ pointerEvents: 'auto' }}
-          title={isPaused ? "Resume" : "Pause"}
+          className={`backdrop-blur-sm text-white p-3 rounded-full transition-all duration-300 border-2 font-bold text-sm ${
+            isPaused 
+              ? 'bg-green-600 border-green-400 hover:bg-green-500 shadow-lg shadow-green-500/50' 
+              : 'bg-red-600 border-red-400 hover:bg-red-500 shadow-lg shadow-red-500/50'
+          }`}
+          title={isPaused ? "Resume (Spacebar)" : "Pause (Spacebar)"}
         >
-          {isPaused ? '▶️' : '⏸️'}
+          <div className="flex items-center space-x-1">
+            <span>{isPaused ? '▶️' : '⏸️'}</span>
+            <span>{isPaused ? 'PLAY' : 'PAUSE'}</span>
+          </div>
         </button>
 
-        {/* Menu Button - Now on LEFT */}
         <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setShowNavigation(!showNavigation);
-            console.log('Menu toggled:', !showNavigation);
-          }}
-          className="bg-black/50 backdrop-blur-sm text-white p-3 rounded-full hover:bg-black/70 transition-all duration-300 cursor-pointer"
-          style={{ pointerEvents: 'auto' }}
+          onClick={handleMenuToggle}
+          className={`backdrop-blur-sm text-white p-3 rounded-full transition-all duration-300 border-2 ${
+            showNavigation 
+              ? 'bg-blue-600 border-blue-400 hover:bg-blue-500' 
+              : 'bg-black/70 border-white/20 hover:bg-black/90'
+          }`}
+          title="Menu"
         >
-          ⋯
+          {showNavigation ? '📖' : '⋯'}
         </button>
       </div>
 
-      {/* Navigation Dots - KEPT on RIGHT for balance */}
-      <div className="absolute right-6 top-1/2 transform -translate-y-1/2 z-60 space-y-3">
+      {/* Left Side Navigation Arrows */}
+      <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-[400] flex flex-col space-y-4">
+        <button
+          onClick={handlePreviousStory}
+          disabled={stories.length <= 1 || showNavigation}
+          className={`w-16 h-16 rounded-full transition-all duration-300 flex items-center justify-center text-xl font-bold border-2 ${
+            stories.length <= 1 || showNavigation
+              ? 'bg-gray-500/50 text-gray-400 cursor-not-allowed border-gray-400/20' 
+              : 'bg-black/80 hover:bg-blue-600 text-white border-white/40 hover:border-blue-400 shadow-lg hover:shadow-xl transform hover:scale-110'
+          }`}
+          title="Previous Story (Left Arrow)"
+        >
+          ⬅️
+        </button>
+
+        <button
+          onClick={handleNextStory}
+          disabled={stories.length <= 1 || showNavigation}
+          className={`w-16 h-16 rounded-full transition-all duration-300 flex items-center justify-center text-xl font-bold border-2 ${
+            stories.length <= 1 || showNavigation
+              ? 'bg-gray-500/50 text-gray-400 cursor-not-allowed border-gray-400/20' 
+              : 'bg-black/80 hover:bg-blue-600 text-white border-white/40 hover:border-blue-400 shadow-lg hover:shadow-xl transform hover:scale-110'
+          }`}
+          title="Next Story (Right Arrow)"
+        >
+          ➡️
+        </button>
+      </div>
+
+      {/* Navigation Dots */}
+      <div className="absolute right-6 top-1/2 transform -translate-y-1/2 z-[200] space-y-3">
         {stories.map((story, index) => (
           <button
             key={index}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onStoryChange(index);
-              console.log('Story changed to:', index);
+            onClick={() => {
+              if (!showNavigation) {
+                console.log(`📍 DOT ${index} CLICKED!`);
+                onStoryChange(index);
+              }
             }}
-            className={`w-3 h-3 rounded-full transition-all duration-300 border cursor-pointer ${
-              currentStory === index 
-                ? 'bg-white scale-125 border-white shadow-lg'
-                : 'bg-transparent border-white/60 hover:bg-white/40 hover:scale-110'
+            disabled={showNavigation}
+            className={`w-4 h-4 rounded-full transition-all duration-300 border-2 ${
+              showNavigation
+                ? 'opacity-50 cursor-not-allowed'
+                : currentStory === index 
+                  ? 'bg-white scale-125 border-white shadow-lg'
+                  : 'bg-transparent border-white/60 hover:bg-white/40 hover:scale-110'
             }`}
-            style={{ pointerEvents: 'auto' }}
             title={story.title}
           />
         ))}
-      </div>
-
-      {/* LEFT SIDE VERTICAL BUTTON STRIP - Alternative Layout */}
-      <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-60 flex flex-col space-y-4">
-        {/* Additional left-side shortcuts */}
-        <motion.button
-          onClick={() => {
-            const prevIndex = currentStory === 0 ? stories.length - 1 : currentStory - 1;
-            onStoryChange(prevIndex);
-          }}
-          className="bg-black/50 backdrop-blur-sm text-white w-12 h-12 rounded-full hover:bg-black/70 transition-all duration-300 cursor-pointer flex items-center justify-center"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          title="Previous Story"
-        >
-          ←
-        </motion.button>
-
-        <motion.button
-          onClick={() => {
-            const nextIndex = (currentStory + 1) % stories.length;
-            onStoryChange(nextIndex);
-          }}
-          className="bg-black/50 backdrop-blur-sm text-white w-12 h-12 rounded-full hover:bg-black/70 transition-all duration-300 cursor-pointer flex items-center justify-center"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          title="Next Story"
-        >
-          →
-        </motion.button>
       </div>
 
       {/* Main Story Content */}
       <div className="absolute inset-0 z-50 flex flex-col justify-between p-6 pt-20 pb-32">
         <div className="flex-1 flex items-end">
           <motion.div 
-            className="max-w-4xl ml-40" // Added left margin to avoid button overlap
+            className="max-w-4xl ml-48"
             key={`content-${currentStory}`}
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
@@ -287,7 +482,7 @@ const StoryNavigation = ({
       </div>
 
       {/* Bottom Action Bar */}
-      <div className="absolute bottom-6 left-40 right-6 z-60"> {/* Adjusted to avoid left buttons */}
+      <div className="absolute bottom-6 left-48 right-6 z-[150]">
         <div className="flex items-center justify-between">
           <motion.div 
             className="flex items-center space-x-4"
@@ -299,11 +494,21 @@ const StoryNavigation = ({
               {currentStory + 1} of {stories.length}
             </div>
             
-            {/* Additional Back Button at Bottom */}
+            <div className={`text-sm px-3 py-2 rounded-full font-bold border-2 ${
+              isPaused 
+                ? 'bg-yellow-500/90 text-black border-yellow-400' 
+                : 'bg-green-500/90 text-white border-green-400'
+            }`}>
+              {isPaused ? '⏸️ PAUSED' : '▶️ PLAYING'}
+            </div>
+
+            <div className="text-white/60 text-xs">
+              Progress: {Math.round(storyProgress * 100)}%
+            </div>
+            
             <button
               onClick={handleBackToHome}
-              className="text-white/60 hover:text-white text-sm flex items-center space-x-1 transition-colors duration-200 cursor-pointer"
-              style={{ pointerEvents: 'auto' }}
+              className="text-white/60 hover:text-white text-sm flex items-center space-x-1 transition-colors duration-200"
             >
               <span>←</span>
               <span>Back to Stories</span>
@@ -312,18 +517,15 @@ const StoryNavigation = ({
 
           {stories[currentStory]?.callToAction && (
             <motion.button 
-              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 rounded-full font-semibold hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('CTA clicked:', stories[currentStory].callToAction);
+              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 rounded-full font-semibold hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+              onClick={() => {
+                console.log('🎯 CTA clicked:', stories[currentStory].callToAction);
               }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
-              style={{ pointerEvents: 'auto' }}
             >
               {stories[currentStory].callToAction}
             </motion.button>
@@ -331,103 +533,115 @@ const StoryNavigation = ({
         </div>
       </div>
 
-      {/* Navigation Menu Overlay */}
+      {/* BULLETPROOF Navigation Menu with Native Close Button */}
       <AnimatePresence>
         {showNavigation && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center"
-          >
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setShowNavigation(false);
-              }}
-              className="absolute top-6 right-6 text-white/80 hover:text-white text-2xl cursor-pointer"
+          <>
+            {/* Main Modal */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/95 backdrop-blur-lg z-[8000]"
+              data-story-modal="true"
               style={{ pointerEvents: 'auto' }}
             >
-              ✕
-            </button>
+              <div className="absolute inset-0 z-[8100] flex items-center justify-center p-8">
+                <div className="w-full max-w-6xl">
+                  <h2 className="text-white text-4xl font-bold text-center mb-12">
+                    📚 Story Menu
+                  </h2>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {stories.map((story, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleStorySelect(index)}
+                        className={`group bg-white/10 backdrop-blur-sm rounded-xl p-6 text-left hover:bg-white/20 transition-all duration-300 border-2 hover:border-white/40 transform hover:scale-105 hover:shadow-2xl ${
+                          currentStory === index ? 'border-blue-400 bg-blue-500/20' : 'border-white/20'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <h3 className="text-white font-bold text-xl mb-2 flex items-center group-hover:text-blue-200 transition-colors">
+                            {currentStory === index && <span className="mr-2">▶️</span>}
+                            {story.title}
+                          </h3>
+                          {currentStory === index && (
+                            <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                              Current
+                            </div>
+                          )}
+                        </div>
+                        
+                        <p className="text-gray-300 text-sm mb-4 leading-relaxed group-hover:text-gray-200 transition-colors">
+                          {story.description}
+                        </p>
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors">
+                            <span className="block">⏱️ Duration: {story.duration}s</span>
+                            <span className="block">🎯 {story.callToAction}</span>
+                          </div>
+                          <div className="text-2xl opacity-50 group-hover:opacity-100 transition-opacity">
+                            ▶️
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto p-6">
-              {stories.map((story, index) => (
-                <button
-                  key={index}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onStoryChange(index);
-                    setShowNavigation(false);
-                  }}
-                  className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-left hover:bg-white/20 transition-all duration-300 cursor-pointer"
-                  style={{ pointerEvents: 'auto' }}
-                >
-                  <h3 className="text-white font-bold text-lg mb-2">{story.title}</h3>
-                  <p className="text-gray-300 text-sm">{story.description}</p>
-                </button>
-              ))}
-            </div>
-          </motion.div>
+                  <div className="text-center mt-8 text-gray-400 text-sm">
+                    <p>Click any story to start • Press ESC to close • RED button in corner to close</p>
+                    <p className="text-yellow-300 mt-2">🔥 If RED button doesn't work, try YELLOW backup button (top-left)</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Background Click to Close */}
+              <div 
+                className="absolute inset-0 z-[7900]"
+                onClick={handleCloseMenu}
+                style={{ pointerEvents: 'auto' }}
+              />
+            </motion.div>
+
+            {/* BULLETPROOF CLOSE BUTTON - Native + Portal */}
+            <CloseButton onClose={handleCloseMenu} show={showNavigation} />
+          </>
         )}
       </AnimatePresence>
 
-      {/* Click Navigation Areas - LOWER Z-INDEX */}
-      <div className="absolute inset-0 z-30 flex">
-        <div 
-          className="w-1/3 h-full cursor-pointer"
-          onClick={() => {
-            const prevIndex = currentStory === 0 ? stories.length - 1 : currentStory - 1;
-            onStoryChange(prevIndex);
-          }}
-        />
-        <div 
-          className="w-1/3 h-full ml-auto cursor-pointer"
-          onClick={() => {
-            const nextIndex = (currentStory + 1) % stories.length;
-            onStoryChange(nextIndex);
-          }}
-        />
-      </div>
+      {/* Click Navigation Areas */}
+      {!showNavigation && (
+        <div className="absolute inset-0 z-20 flex">
+          <div 
+            className="w-1/4 h-full cursor-pointer"
+            onClick={handlePreviousStory}
+          />
+          <div className="w-2/4 h-full" />
+          <div 
+            className="w-1/4 h-full cursor-pointer"
+            onClick={handleNextStory}
+          />
+        </div>
+      )}
 
-      {/* LEFT-ALIGNED Debug Info */}
-      <div className="absolute top-20 left-40 z-60 text-white/60 text-xs">
-        <p>Debug: Story {currentStory + 1}, Progress: {Math.round(storyProgress * 100)}%</p>
-        <p>onExit function: {onExit ? '✅ Available' : '❌ Missing'}</p>
-        <p>Buttons: LEFT SIDE</p>
+      {/* Enhanced DEBUG INFO */}
+      <div className="absolute top-32 left-48 z-[100] text-white/70 text-xs bg-black/70 p-3 rounded">
+        <p>🔍 <strong>DEBUG:</strong></p>
+        <p>Story: {currentStory + 1}/{stories.length}</p>
+        <p>Progress: {Math.round(storyProgress * 100)}%</p>
+        <p>Paused: <span className={isPaused ? 'text-red-400' : 'text-green-400'}>
+          {isPaused ? '⏸️ YES' : '▶️ NO'}
+        </span></p>
+        <p>Menu: <span className={showNavigation ? 'text-blue-400' : 'text-gray-400'}>
+          {showNavigation ? '📖 OPEN' : '❌ CLOSED'}
+        </span></p>
+        <p>Close Btn: <span className="text-red-400">🔥 Native DOM + Portal</span></p>
+        <p><em>RED=Native, YELLOW=Portal backup</em></p>
       </div>
     </div>
   );
-};
-
-// Progress Hook (unchanged)
-const useStoryProgress = (duration, hasStarted) => {
-  const [progress, setProgress] = useState(0);
-  const resetProgress = () => setProgress(0);
-
-  useEffect(() => {
-    if (!hasStarted) {
-      setProgress(0);
-      return;
-    }
-
-    setProgress(0);
-    const interval = 50;
-    const increment = interval / (duration * 1000);
-
-    const timer = setInterval(() => {
-      setProgress(prev => {
-        const newProgress = prev + increment;
-        return newProgress >= 1 ? 1 : newProgress;
-      });
-    }, interval);
-
-    return () => clearInterval(timer);
-  }, [duration, hasStarted]);
-
-  return { progress, resetProgress };
 };
 
 // Main Component (unchanged)
@@ -435,10 +649,12 @@ const AdventureStorytellingWebsite = () => {
   const [hasStarted, setHasStarted] = useState(false);
   const [currentStory, setCurrentStory] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
   
   const { progress, resetProgress } = useStoryProgress(
     stories[currentStory]?.duration || 10, 
-    hasStarted
+    hasStarted,
+    isPaused
   );
 
   useEffect(() => {
@@ -448,29 +664,37 @@ const AdventureStorytellingWebsite = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleStoryChange = (newIndex) => {
-    console.log('Story changing from', currentStory, 'to', newIndex);
+  const handleStoryChange = useCallback((newIndex) => {
+    console.log('📚 Story changing from', currentStory, 'to', newIndex);
     setCurrentStory(newIndex);
     resetProgress();
-  };
+  }, [currentStory, resetProgress]);
 
-  const startExperience = () => {
-    console.log('Starting experience...');
+  const startExperience = useCallback(() => {
+    console.log('🚀 Starting experience...');
     setHasStarted(true);
-  };
+    setIsPaused(false);
+  }, []);
 
-  const exitStoryMode = () => {
-    console.log('🚀 EXIT STORY MODE CALLED!');
-    console.log('Current hasStarted state:', hasStarted);
-    
+  const exitStoryMode = useCallback(() => {
+    console.log('🏠 EXIT STORY MODE CALLED!');
     setHasStarted(false);
     setCurrentStory(0);
+    setIsPaused(false);
     resetProgress();
-    
-    console.log('✅ Story mode should be exited now');
-  };
+    console.log('✅ Story mode exited');
+  }, [resetProgress]);
 
-  console.log('🔍 Current State:', { hasStarted, currentStory, isLoading });
+  const handlePauseToggle = useCallback(() => {
+    console.log('⏯️ PAUSE TOGGLE CALLED! Current state:', isPaused);
+    setIsPaused(prev => {
+      const newState = !prev;
+      console.log('New pause state:', newState);
+      return newState;
+    });
+  }, [isPaused]);
+
+  console.log('🔍 App State:', { hasStarted, currentStory, isLoading, isPaused, progress: Math.round(progress * 100) + '%' });
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -489,6 +713,8 @@ const AdventureStorytellingWebsite = () => {
         storyProgress={progress}
         isAutoPlay={true}
         onExit={exitStoryMode}
+        isPaused={isPaused}
+        onPauseToggle={handlePauseToggle}
       />
     </div>
   );
